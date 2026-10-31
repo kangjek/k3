@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<title>Inspeksi K3</title>
+<meta name="theme-color" content="#F1F4F0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inspeksi K3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+[hidden]{display:none!important}
+/* Layout: satu kolom mobile (maks 560px). Header menempel di atas, tab bar tetap di bawah.
+   Warna mengikuti sistem rambu ISO 7010: hijau = aman, merah = bahaya, kuning = waspada, biru = tindakan wajib.
+   Hero hijau tua menampilkan Safe Man-Hours. Barlow Condensed untuk angka dan label (gaya rambu), IBM Plex Mono untuk kode alat. */
+:root{
+  --bg:#F1F4F0; --surface:#FFFFFF; --surface-2:#E8EDE7; --line:#D5DDD4; --line-strong:#B9C5BA;
+  --fg:#14231B; --fg-2:#46564D; --fg-3:#5B6A61;
+  --primary:#1B4F9C; --on-primary:#FFFFFF; --primary-soft:#E1EAF8; --primary-text:#1B4F9C;
+  --ok-solid:#17794D; --on-ok:#FFFFFF; --ok-soft:#DDF0E5; --ok-text:#0E6A41;
+  --warn-solid:#8F5F00; --on-warn:#FFFFFF; --warn-soft:#FBEFCB; --warn-text:#7A5200;
+  --danger-solid:#B3261E; --on-danger:#FFFFFF; --danger-soft:#FBE4E1; --danger-text:#A3201A;
+  --hero-bg:#0F3A29; --hero-fg:#EAF6EF; --hero-fg-2:#A9C7B7; --hero-accent:#7DE3B0; --hero-line:#2B5844; --hero-danger:#FF9A90;
+  --scrim:rgba(8,16,12,.55);
+  --f-disp:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1411; --surface:#15201B; --surface-2:#1D2B24; --line:#27372F; --line-strong:#3A4E44;
+    --fg:#E6EEE9; --fg-2:#B0BFB6; --fg-3:#8C9C93;
+    --primary:#7FAEF5; --on-primary:#0A1B36; --primary-soft:#172742; --primary-text:#9DC1FA;
+    --ok-solid:#4CC38A; --on-ok:#05200F; --ok-soft:#133224; --ok-text:#6FD6A3;
+    --warn-solid:#E3AE3C; --on-warn:#2A1E00; --warn-soft:#352A0C; --warn-text:#EBBF5E;
+    --danger-solid:#FF8C82; --on-danger:#3A0B07; --danger-soft:#3A1816; --danger-text:#FFA39B;
+    --hero-bg:#11382A; --scrim:rgba(0,0,0,.65);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1411; --surface:#15201B; --surface-2:#1D2B24; --line:#27372F; --line-strong:#3A4E44;
+  --fg:#E6EEE9; --fg-2:#B0BFB6; --fg-3:#8C9C93;
+  --primary:#7FAEF5; --on-primary:#0A1B36; --primary-soft:#172742; --primary-text:#9DC1FA;
+  --ok-solid:#4CC38A; --on-ok:#05200F; --ok-soft:#133224; --ok-text:#6FD6A3;
+  --warn-solid:#E3AE3C; --on-warn:#2A1E00; --warn-soft:#352A0C; --warn-text:#EBBF5E;
+  --danger-solid:#FF8C82; --on-danger:#3A0B07; --danger-soft:#3A1816; --danger-text:#FFA39B;
+  --hero-bg:#11382A; --scrim:rgba(0,0,0,.65);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:400 15px/1.45 var(--f-body);background:var(--bg);color:var(--fg);-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0 0 auto;height:0px;z-index:30;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,p,dl,dd,ul,ol,figure{margin:0;padding:0}
+ul,ol{list-style:none}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding-left:max(16px,0px);padding-right:max(16px,0px)}
+.mono{font-family:var(--f-mono);letter-spacing:-.01em}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--fg-2)}
+.lbl{font:600 14px/1.1 var(--f-disp);letter-spacing:.09em;text-transform:uppercase;color:var(--fg-2)}
+.req{font:500 12px/1 var(--f-body);color:var(--fg-3)}
+.ic{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* header */
+.top{position:sticky;top:0px;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.top-in{display:flex;align-items:center;gap:12px;min-height:60px;padding-top:8px;padding-bottom:8px}
+.top-t{flex:1;min-width:0}
+.ttl{font:700 26px/1.05 var(--f-disp);letter-spacing:.01em;text-transform:uppercase;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ttl.mono{font:500 20px/1.2 var(--f-mono);text-transform:none}
+.sub{font-size:13px;color:var(--fg-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip-proto{font:600 11px/1 var(--f-disp);letter-spacing:.1em;padding:4px 6px 3px;border:1px solid var(--line-strong);border-radius:4px;color:var(--fg-2)}
+.icon-btn{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
+.av{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:var(--primary-soft);color:var(--primary-text);font:700 15px/1 var(--f-disp);letter-spacing:.04em}
+.who{border:0;background:none;padding:3px;border-radius:50%;cursor:pointer}
+
+/* main + tabs */
+.main{padding-top:16px;padding-bottom:calc(104px + 0px)}
+.main.noTabs{padding-bottom:calc(112px + 0px)}
+.stack{display:flex;flex-direction:column;gap:16px}
+.stack-s{display:flex;flex-direction:column;gap:10px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding-bottom:0px}
+.tabs-in{display:flex}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px 9px;border:0;background:none;color:var(--fg-2);font:600 12px/1.1 var(--f-body);cursor:pointer;position:relative;min-height:60px}
+.tab[aria-current=page]{color:var(--primary-text)}
+.tab[aria-current=page]::before{content:"";position:absolute;top:0;left:22%;right:22%;height:3px;border-radius:0 0 3px 3px;background:var(--primary)}
+.tab .ic{width:24px;height:24px}
+.tab.scan .bubble{display:grid;place-items:center;width:46px;height:34px;border-radius:17px;background:var(--primary);color:var(--on-primary)}
+.tab.scan[aria-current=page]::before{display:none}
+.badge{position:absolute;top:5px;left:calc(50% + 6px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--danger-solid);color:var(--on-danger);font:700 11px/18px var(--f-body);text-align:center}
+
+/* generic blocks */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px}
+.panel.tap{cursor:pointer;width:100%;text-align:left}
+button.panel{font:inherit}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 2px;border-radius:999px;font:600 12px/1.3 var(--f-body);white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-soft);color:var(--ok-text)}
+.pill.warn{background:var(--warn-soft);color:var(--warn-text)}
+.pill.bad{background:var(--danger-soft);color:var(--danger-text)}
+.pill.info{background:var(--primary-soft);color:var(--primary-text)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);font-weight:600;cursor:pointer;text-align:center}
+.btn.sm{min-height:42px;padding:0 14px}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.btn.ok{background:var(--ok-solid);border-color:var(--ok-solid);color:var(--on-ok)}
+.btn.danger{background:var(--danger-solid);border-color:var(--danger-solid);color:var(--on-danger)}
+.btn.ghost{background:transparent}
+.btn.block{width:100%}
+.btn[aria-disabled=true]{opacity:.45}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.err{color:var(--danger-text);font-size:13px;min-height:18px}
+.hint{font-size:13px;color:var(--fg-2)}
+.note{padding:10px 12px;border-radius:10px;font-size:14px}
+.note.warn{background:var(--warn-soft);color:var(--warn-text)}
+.note.info{background:var(--primary-soft);color:var(--primary-text)}
+.empty{padding:26px 16px;text-align:center;color:var(--fg-2)}
+
+/* forms */
+label.l{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
+input[type=text],input[type=number],input[type=month],input[type=date],input[type=search],select,textarea{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);appearance:none;-webkit-appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--fg-2) 50%),linear-gradient(135deg,var(--fg-2) 50%,transparent 50%);background-position:calc(100% - 20px) 20px,calc(100% - 15px) 20px;background-size:5px 5px;background-repeat:no-repeat;padding-right:34px}
+textarea{min-height:78px;resize:vertical;line-height:1.4}
+.field{display:flex;flex-direction:column}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stepper{display:grid;grid-template-columns:46px minmax(0,1fr) 46px;gap:6px}
+.stepper input{text-align:center;font-variant-numeric:tabular-nums}
+.stepper button{border:1px solid var(--line-strong);border-radius:10px;background:var(--surface);font:600 22px/1 var(--f-body);cursor:pointer}
+.photo{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.thumb{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+
+/* login */
+.login{min-height:100%;padding-top:48px;padding-bottom:40px}
+.login h1{font:700 52px/.95 var(--f-disp);text-transform:uppercase;letter-spacing:.01em}
+.login .co{margin-top:8px;color:var(--fg-2)}
+.demo-u{display:flex;flex-direction:column;gap:8px}
+.demo-b{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;text-align:left;min-height:48px}
+.demo-b .mono{font-size:13px;color:var(--fg-2)}
+
+/* hero */
+.hero{background:var(--hero-bg);color:var(--hero-fg);border-radius:14px;padding:16px 16px 12px}
+.hero .lbl{color:var(--hero-accent)}
+.hero-num{display:flex;align-items:baseline;gap:8px;margin-top:8px}
+.hero-num b{font:700 66px/.95 var(--f-disp);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.hero-num span{font:600 20px/1 var(--f-disp);letter-spacing:.06em;text-transform:uppercase;color:var(--hero-fg-2)}
+.hero-sub{margin-top:6px;color:var(--hero-fg-2);font-size:14px}
+.spark{display:block;width:100%;height:auto;margin-top:12px;overflow:visible}
+.sp-base{stroke:var(--hero-line);stroke-width:1}
+.sp-area{fill:var(--hero-accent);opacity:.16}
+.sp-line{fill:none;stroke:var(--hero-accent);stroke-width:2.4;stroke-linejoin:round;stroke-linecap:round}
+.sp-end{fill:var(--hero-accent);stroke:var(--hero-bg);stroke-width:2}
+.sp-lti{fill:var(--hero-danger);stroke:var(--hero-bg);stroke-width:2}
+.spark-x{display:grid;margin-top:4px;font-size:12px;color:var(--hero-fg-2);text-align:center}
+.spark-lg{margin-top:6px;font-size:12px;color:var(--hero-fg-2);display:flex;align-items:center;gap:6px}
+.spark-lg i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--hero-danger)}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--hero-line)}
+.hero-stats dt{font-size:12px;color:var(--hero-fg-2)}
+.hero-stats dd{font:700 26px/1.1 var(--f-disp);font-variant-numeric:tabular-nums}
+.per{margin-top:8px;font-size:12px;color:var(--hero-fg-2)}
+
+/* home cards */
+.triple{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.triple div{min-width:0}
+.triple b{display:block;font:700 34px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.triple span{font-size:13px;color:var(--fg-2);display:flex;align-items:center;gap:5px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.ok{background:var(--ok-solid)}.dot.warn{background:var(--warn-solid)}.dot.bad{background:var(--danger-solid)}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--surface-2);margin-top:12px}
+.bar i{display:block;height:100%}
+.bar i.ok{background:var(--ok-solid)}.bar i.warn{background:var(--warn-solid)}.bar i.bad{background:var(--danger-solid)}
+.pct{font:700 15px/1 var(--f-disp);letter-spacing:.04em;color:var(--fg-2);text-transform:uppercase;white-space:nowrap}
+.big-pct{display:flex;align-items:baseline;gap:10px}
+.big-pct b{font:700 48px/1 var(--f-disp);font-variant-numeric:tabular-nums}
+.cat{display:grid;grid-template-columns:minmax(0,1fr) 84px 38px;gap:10px;align-items:center;font-size:14px;padding:7px 0;border-top:1px solid var(--line)}
+.big-pct{margin-bottom:12px}
+.cat .bar{margin:0;height:8px}
+.cat .n{text-align:right;font-variant-numeric:tabular-nums;color:var(--fg-2)}
+.rows{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.rows>li{padding:12px 14px;border-top:1px solid var(--line)}
+.rows>li:first-child{border-top:0}
+.act-row{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;border:0;background:none;padding:0;color:inherit}
+button.act-row{cursor:pointer}
+.act-ic{display:grid;place-items:center;width:34px;height:34px;border-radius:8px;flex:none}
+.act-ic.bad{background:var(--danger-soft);color:var(--danger-text)}
+.act-ic.warn{background:var(--warn-soft);color:var(--warn-text)}
+.act-ic.info{background:var(--primary-soft);color:var(--primary-text)}
+.act-t{font-weight:600}
+.act-d{font-size:13px;color:var(--fg-2)}
+
+/* scan */
+.finder{position:relative;display:grid;place-items:center;align-content:center;text-align:center;gap:10px;aspect-ratio:1/1;max-height:340px;width:100%;margin:0 auto;border:0;border-radius:14px;background:var(--surface-2);color:var(--fg);cursor:pointer;padding:20px}
+.finder .c{position:absolute;width:34px;height:34px;border:4px solid var(--primary);}
+.finder .c1{top:14px;left:14px;border-right:0;border-bottom:0;border-radius:10px 0 0 0}
+.finder .c2{top:14px;right:14px;border-left:0;border-bottom:0;border-radius:0 10px 0 0}
+.finder .c3{bottom:14px;left:14px;border-right:0;border-top:0;border-radius:0 0 0 10px}
+.finder .c4{bottom:14px;right:14px;border-left:0;border-top:0;border-radius:0 0 10px 0}
+.finder .big{width:44px;height:44px;color:var(--primary-text)}
+.finder strong{font:700 24px/1.1 var(--f-disp);text-transform:uppercase;letter-spacing:.03em}
+.finder span.t{font-size:14px;color:var(--fg-2);max-width:230px}
+details.dt{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+details.dt>summary{list-style:none;cursor:pointer;padding:13px 14px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:48px}
+details.dt>summary::-webkit-details-marker{display:none}
+details.dt>summary::after{content:"+";font:600 22px/1 var(--f-body);color:var(--fg-2)}
+details.dt[open]>summary::after{content:"\2212"}
+details.dt .dt-b{padding:0 14px 14px;display:flex;flex-direction:column;gap:12px}
+.sim{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sim button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;text-align:left;min-height:48px}
+.sim button .mono{font-size:13px;font-weight:500}
+.sim button small{color:var(--fg-2);font-size:12px}
+
+/* inspection */
+.alat-card{display:flex;flex-direction:column;gap:8px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;font-size:14px}
+.kv dt{color:var(--fg-2)}
+.kv dd{min-width:0;overflow-wrap:anywhere}
+.chk-list{display:flex;flex-direction:column;gap:10px}
+.chk{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.chk.is-bad{background:var(--danger-soft);border-color:var(--danger-solid)}
+.chk-q{display:flex;gap:10px;align-items:flex-start}
+.chk-no{flex:none;display:grid;place-items:center;width:26px;height:26px;border-radius:6px;background:var(--surface-2);font:600 13px/1 var(--f-mono);margin-top:1px}
+.chk-q p{min-width:0}
+.seg{display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:6px}
+.seg-b{min-height:46px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);font-weight:600;cursor:pointer}
+.seg-b.on.seg-ok{background:var(--ok-solid);border-color:var(--ok-solid);color:var(--on-ok)}
+.seg-b.on.seg-tidak-ok{background:var(--danger-solid);border-color:var(--danger-solid);color:var(--on-danger)}
+.seg-b.on.seg-n-a{background:var(--fg-2);border-color:var(--fg-2);color:var(--bg)}
+.chk-more{display:flex;flex-direction:column;gap:10px}
+.submitbar{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);padding-top:10px;padding-bottom:calc(10px + 0px)}
+.submitbar .wrap{display:flex;align-items:center;gap:12px}
+.sb-info{flex:1;min-width:0;font-size:13px;color:var(--fg-2)}
+.sb-info strong{font:700 20px/1 var(--f-disp);color:var(--fg);font-variant-numeric:tabular-nums}
+.sb-hint{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.discard{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.done{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding-top:24px}
+.done-ic{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;background:var(--ok-soft);color:var(--ok-text)}
+.done-ic .ic{width:38px;height:38px;stroke-width:2.2}
+.done h2{font:700 30px/1 var(--f-disp);text-transform:uppercase}
+
+/* temuan */
+.filters{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin:0 -2px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.fchip{flex:none;display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 13px;border-radius:20px;border:1px solid var(--line-strong);background:var(--surface);font-weight:600;font-size:14px;cursor:pointer}
+.fchip[aria-pressed=true]{background:var(--primary);border-color:var(--primary);color:var(--on-primary)}
+.fchip small{font-weight:600;opacity:.8;font-variant-numeric:tabular-nums}
+.trow{display:flex;gap:12px;width:100%;text-align:left;border:0;background:none;padding:0;cursor:pointer;color:inherit}
+.th{display:grid;place-items:center;flex:none;width:56px;height:56px;border-radius:8px;background:var(--surface-2);color:var(--fg-3);overflow:hidden}
+.th img{width:100%;height:100%;object-fit:cover}
+.tb{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.tl{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tl .mono{font-size:13px;color:var(--fg-2)}
+.td{font-weight:600;overflow-wrap:anywhere}
+.tm{font-size:13px;color:var(--fg-2)}
+.tl2{display:flex;flex-direction:column;gap:0;margin-top:4px}
+.tl2 li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;padding-bottom:14px;position:relative}
+.tl2 li::before{content:"";position:absolute;left:10px;top:20px;bottom:-2px;width:2px;background:var(--line)}
+.tl2 li:last-child::before{display:none}
+.tl2 .mk{width:22px;height:22px;border-radius:50%;border:2px solid var(--line-strong);background:var(--surface);display:grid;place-items:center}
+.tl2 .stp .mk{background:var(--ok-solid);border-color:var(--ok-solid);color:var(--on-ok)}
+.tl2 .mk .ic{width:13px;height:13px;stroke-width:3}
+.tl2 b{display:block}
+.tl2 small{color:var(--fg-2);font-size:13px}
+.fig{display:flex;flex-direction:column;gap:6px}
+.fig img{width:100%;max-height:260px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.fig figcaption{font-size:12px;color:var(--fg-2)}
+.fig.ph{flex-direction:row;align-items:center;gap:8px;padding:12px;border:1px dashed var(--line-strong);border-radius:10px;color:var(--fg-2);font-size:13px}
+
+/* admin */
+.tabs2{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;background:var(--surface-2);border-radius:12px}
+.tabs2 button{min-height:42px;border:0;border-radius:9px;background:none;font-weight:600;color:var(--fg-2);cursor:pointer}
+.tabs2 button[aria-pressed=true]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.live{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px;border-radius:10px;background:var(--surface-2)}
+.live dt{font-size:12px;color:var(--fg-2)}
+.live dd{font:700 22px/1.1 var(--f-disp);font-variant-numeric:tabular-nums}
+.tbl-w{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:430px;font-size:14px}
+th,td{padding:9px 10px;text-align:right;border-top:1px solid var(--line);font-variant-numeric:tabular-nums;white-space:nowrap}
+th{font:600 13px/1.1 var(--f-disp);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-2);border-top:0;background:var(--surface-2)}
+th:first-child,td:first-child{text-align:left}
+.arow{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.arow .mid{min-width:0;flex:1}
+.arow .mono{font-size:14px;font-weight:500}
+.arow small{display:block;color:var(--fg-2);font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* sheet + toast */
+.scrim{position:fixed;inset:0;z-index:40;background:var(--scrim)}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:560px;margin:0 auto;max-height:90%;overflow:auto;background:var(--surface);border-radius:16px 16px 0 0;padding-bottom:calc(20px + 0px);outline:0}
+.sheet-in{display:flex;flex-direction:column;gap:14px;padding-top:6px}
+.sheet-h{position:sticky;top:0;background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;z-index:1}
+.sheet-h h2{font:700 22px/1.1 var(--f-disp);text-transform:uppercase;letter-spacing:.02em;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.qrbox{background:#fff;border-radius:10px;padding:8px;width:min(100%,280px);margin:0 auto;border:1px solid var(--line)}
+.qr{display:block;width:100%;height:auto}
+.url{font-family:var(--f-mono);font-size:12px;word-break:break-all;user-select:all;padding:10px;border-radius:8px;background:var(--surface-2);color:var(--fg-2)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + 0px);z-index:60;width:min(calc(100% - 32px),520px);pointer-events:none}
+#toast .t{margin-top:8px;padding:12px 14px;border-radius:10px;background:var(--fg);color:var(--bg);font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+#toast .t.err{background:var(--danger-solid);color:var(--on-danger)}
+@media (prefers-reduced-motion:no-preference){
+  .sheet{animation:up .18s ease-out}
+  @keyframes up{from{transform:translateY(24px);opacity:.4}to{transform:none;opacity:1}}
+}
+
+.viewer{position:relative;aspect-ratio:1/1;max-height:360px;width:100%;margin:0 auto;border-radius:14px;overflow:hidden;background:#0B120F;color:#fff}
+.viewer .slot,.viewer video{position:absolute;inset:0;width:100%;height:100%}
+.viewer video{object-fit:cover;background:#0B120F}
+.viewer .c{position:absolute;width:38px;height:38px;border:4px solid #fff;z-index:2;pointer-events:none}
+.viewer .c1{top:14px;left:14px;border-right:0;border-bottom:0;border-radius:10px 0 0 0}
+.viewer .c2{top:14px;right:14px;border-left:0;border-bottom:0;border-radius:0 10px 0 0}
+.viewer .c3{bottom:14px;left:14px;border-right:0;border-top:0;border-radius:0 0 0 10px}
+.viewer .c4{bottom:14px;right:14px;border-left:0;border-top:0;border-radius:0 0 10px 0}
+.viewer .ln{position:absolute;top:12%;left:12%;right:12%;height:76%;overflow:hidden;z-index:2;pointer-events:none;opacity:0}
+.viewer .ln::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,transparent calc(100% - 2px),#7FE3A5 calc(100% - 2px))}
+.viewer[data-s=live] .ln{opacity:.9}
+.vmsg{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:14px;text-align:center;font-size:14px;background:linear-gradient(transparent,rgba(0,0,0,.7))}
+.viewer:not([data-s=live]):not([data-s=starting]) .vmsg{top:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:28px;background:rgba(11,18,15,.94)}
+.vmsg p{margin:0;max-width:290px;line-height:1.45}
+.vbtn{position:absolute;top:10px;right:10px;z-index:4;min-height:44px;padding:0 14px;border-radius:22px;border:1px solid rgba(255,255,255,.65);background:rgba(0,0,0,.5);color:#fff;font:600 14px var(--f-body);cursor:pointer}
+@media (prefers-reduced-motion:no-preference){
+  .viewer[data-s=live] .ln::after{animation:sweep 2.4s ease-in-out infinite alternate}
+  @keyframes sweep{from{transform:translateY(-100%)}to{transform:translateY(0)}}
+}
+</style>
+
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5l9.5 16.5h-19zM12 10v4.5M12 17.2v.01"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 5-5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 14h2v2h-2zM14 18h2v2h-2zM18 18h2v2h-2z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M12 3l8 4v10l-8 4-8-4V7zM4 7l8 4 8-4M12 11v10"/></symbol>
+</svg>
+
+<div id="app"></div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ------------------------------------------------------------------ konfigurasi dan data awal */
+const BOOT = (function(){var k=(new URLSearchParams(location.search).get('kode')||'').trim();return {kode:/^[A-Za-z0-9._-]{1,40}$/.test(k)?k.toUpperCase():'',company:''};})();            // diisi server: {kode dari QR, nama perusahaan}
+const TOKEN_KEY = 'k3.token';
+const DAY = 86400000;
+let INTERVAL = {Harian:1, Mingguan:7, Bulanan:31, Tahunan:366};
+let LATE_DAYS = 14, EXPIRY_DAYS = 30, RATE_BASE = 1000000;   // diganti oleh nilai dari sheet Config
+const KATEGORI = ['Pemadam Kebakaran','Alat Kerja','P3K'];
+
+/* ------------------------------------------------------------------ util */
+const $ = (s, r) => (r || document).querySelector(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const ym = d => d.getFullYear() + '-' + pad(d.getMonth() + 1);
+const parseYM = p => { const a = p.split('-').map(Number); return new Date(a[0], a[1] - 1, 1); };
+const parseYMD = s => { const a = s.split('-').map(Number); return new Date(a[0], a[1] - 1, a[2]); };
+const sod = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); return x; };
+const addDays = (d, n) => new Date(d.getTime() + n * DAY);
+const daysBetween = (a, b) => Math.round((sod(b) - sod(a)) / DAY);
+const nf0 = new Intl.NumberFormat('id-ID', {maximumFractionDigits: 0});
+const nf2 = new Intl.NumberFormat('id-ID', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const fmtN = n => nf0.format(Math.round(n));
+const fDate = new Intl.DateTimeFormat('id-ID', {day: 'numeric', month: 'short', year: 'numeric'});
+const fMonth = new Intl.DateTimeFormat('id-ID', {month: 'short', year: 'numeric'});
+const fMon = new Intl.DateTimeFormat('id-ID', {month: 'short'});
+const fTime = new Intl.DateTimeFormat('id-ID', {hour: '2-digit', minute: '2-digit'});
+const fDT = d => fDate.format(d) + ', ' + fTime.format(d);
+const rel = n => n <= 0 ? 'hari ini' : n === 1 ? 'kemarin' : n + ' hari lalu';
+const slug = s => s.toLowerCase().replace(/[^a-z]+/g, '-').replace(/^-|-$/g, '');
+const ic = (n, c) => '<svg class="ic ' + (c || '') + '" aria-hidden="true"><use href="#i-' + n + '"/></svg>';
+
+/* ------------------------------------------------------------------ data dari Google Sheets (lewat Apps Script) */
+let DB = null, TOKEN = null;
+const FOTO = {};                                   // cache foto dari Drive (data URL)
+const uuid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+function tokGet(){ try{ return localStorage.getItem(TOKEN_KEY); }catch(e){ return null; } }
+function tokSet(v){ try{ if (v) localStorage.setItem(TOKEN_KEY, v); else localStorage.removeItem(TOKEN_KEY); }catch(e){} }
+const API_URL = String(window.K3_API || '').trim();     // diisi di config.js bila halaman ini dihosting di luar Apps Script (mis. GitHub Pages)
+async function rpcHttp(action, payload){
+  if (!API_URL || API_URL.indexOf('ISI_DI_SINI') >= 0) throw Object.assign(new Error('Alamat API belum diisi. Isi K3_API di file config.js.'), {code: 'setup'});
+  const ac = window.AbortController ? new AbortController() : null, to = ac ? setTimeout(() => ac.abort(), 90000) : 0;
+  let res;
+  try{
+    res = await fetch(API_URL, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({action, token: TOKEN || '', payload: payload || {}}), redirect: 'follow', credentials: 'omit', signal: ac ? ac.signal : undefined});
+  }catch(e){ throw Object.assign(new Error('Koneksi bermasalah. Periksa sinyal lalu coba lagi.'), {code: 'net', detail: e && e.message}); }
+  finally{ if (to) clearTimeout(to); }
+  let r;
+  try{ r = await res.json(); }
+  catch(e){ throw Object.assign(new Error('Server tidak menjawab dengan benar. Pastikan deployment Apps Script: Who has access = Anyone.'), {code: 'net'}); }
+  if (r && r.error){ const e = new Error(r.error); e.code = r.code; throw e; }
+  return r ? r.data : null;
+}
+function rpc(action, payload){
+  if (API_URL) return rpcHttp(action, payload);
+  return new Promise((res, rej) => {
+    if (!(window.google && google.script && google.script.run)) return rej(Object.assign(new Error('Halaman ini harus dibuka dari alamat webapp.'), {code: 'offline'}));
+    google.script.run
+      .withSuccessHandler(r => { if (r && r.error){ const e = new Error(r.error); e.code = r.code; rej(e); } else res(r ? r.data : null); })
+      .withFailureHandler(e => rej(Object.assign(new Error('Koneksi bermasalah. Periksa sinyal lalu coba lagi.'), {code: 'net', detail: e && e.message})))
+      .api(action, TOKEN || '', payload || {});
+  });
+}
+function applyData(d){
+  DB = d; const c = d.config;
+  INTERVAL = c.intervals; LATE_DAYS = c.lateDays; EXPIRY_DAYS = c.expiryDays; RATE_BASE = c.rateBase; S.user = d.user;
+}
+async function refresh(){ applyData(await rpc('bootstrap')); }
+const company = () => (DB && DB.config && DB.config.company) || BOOT.company || '';
+
+/* ------------------------------------------------------------------ perhitungan (sama dengan rumus di template Excel) */
+const jenisOf = n => DB.jenis.find(j => j.jenis === n);
+const kategoriOf = a => (jenisOf(a.jenis) || {}).kategori || '';
+const freqOf = a => a.frek || (jenisOf(a.jenis) || {}).frek || 'Bulanan';
+const findAlat = k => { k = String(k || '').trim().toUpperCase(); return DB.alat.find(a => a.kode.toUpperCase() === k); };
+const isAdmin = () => S.user && S.user.role === 'Admin K3';
+function lastInsp(kode){ const a = findAlat(kode); return a && a.last ? a.last : null; }
+function statusAlat(a){
+  if (!a.aktif) return '';
+  const last = lastInsp(a.kode);
+  if (!last) return 'Belum Pernah';
+  return daysBetween(new Date(last), new Date()) > INTERVAL[freqOf(a)] ? 'Terlambat' : 'Sesuai Jadwal';
+}
+function statRows(){
+  const rows = DB.stat.slice().sort((a, b) => a.periode < b.periode ? -1 : 1);
+  let smh = 0;
+  return rows.map(r => {
+    smh = r.lti > 0 ? 0 : smh + r.jam;
+    return Object.assign({}, r, {smh, fr: r.jam ? r.lti * RATE_BASE / r.jam : null, sr: r.jam ? r.hh * RATE_BASE / r.jam : null});
+  });
+}
+const umur = t => t.status === 'Closed' && t.tglVerif ? daysBetween(new Date(t.tgl), new Date(t.tglVerif)) : daysBetween(new Date(t.tgl), new Date());
+function temuanCounts(){
+  const c = {total: DB.temuan.length, open: 0, wait: 0, closed: 0, late: 0};
+  DB.temuan.forEach(t => {
+    if (t.status === 'Open') c.open++; else if (t.status === 'Menunggu Verifikasi') c.wait++; else c.closed++;
+    if (t.status !== 'Closed' && umur(t) > LATE_DAYS) c.late++;
+  });
+  return c;
+}
+function compliance(){
+  const act = DB.alat.filter(a => a.aktif);
+  const r = {total: act.length, ok: 0, late: [], never: [], cat: {}, month: 0, expiring: []};
+  r.month = DB.monthCount;
+  act.forEach(a => {
+    const s = statusAlat(a), k = kategoriOf(a) || 'Lainnya';
+    r.cat[k] = r.cat[k] || {n: 0, ok: 0};
+    r.cat[k].n++;
+    if (s === 'Sesuai Jadwal'){ r.ok++; r.cat[k].ok++; }
+    else if (s === 'Terlambat') r.late.push(a); else r.never.push(a);
+    if (a.kadaluarsa && daysBetween(new Date(), parseYMD(a.kadaluarsa)) <= EXPIRY_DAYS) r.expiring.push(a);
+  });
+  return r;
+}
+
+/* ------------------------------------------------------------------ state */
+const S = {user: null, tab: 'home', filter: 'Semua', adminTab: 'stat', sheet: null, insp: null, done: null, sheetFocused: false, boot: true, needPin: false, nikTmp: '', loginMsg: '', busy: false};
+const PH = {};                                   // foto yang sedang diambil (data URL)
+const clearPH = p => Object.keys(PH).forEach(k => { if (k.indexOf(p) === 0) delete PH[k]; });
+
+/* ---- draf: isian yang sedang dikerjakan disimpan di HP supaya selamat dari muat ulang (kamera membuka aplikasi lain, browser kehabisan memori) */
+const DRAFT_KEY = 'k3.draft', DRAFT_TTL = 12 * 3600 * 1000;
+let draftTimer;
+function draftData(){
+  if (!S.user) return null;
+  const d = {nik: S.user.nik, t: Date.now(), insp: null, sheet: null, ph: {}};
+  if (S.insp){
+    d.insp = {kode: S.insp.kode, ans: S.insp.ans, umum: S.insp.umum || '', reqId: S.insp.reqId};
+    Object.keys(PH).forEach(k => { if (k.indexOf('i:') === 0) d.ph[k] = PH[k]; });
+  } else if (S.sheet && S.sheet.type === 'temuan'){
+    const k = 'tc:' + S.sheet.id;
+    if (S.sheet.note || PH[k]){ d.sheet = {id: S.sheet.id, note: S.sheet.note || ''}; if (PH[k]) d.ph[k] = PH[k]; }
+  }
+  return (d.insp || d.sheet) ? d : null;
+}
+function saveDraftNow(){
+  clearTimeout(draftTimer);
+  if (S.boot || !S.user) return;                    // jangan hapus draf sebelum sempat dipulihkan
+  const d = draftData();
+  try{
+    if (!d){ localStorage.removeItem(DRAFT_KEY); return; }
+    try{ localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); }
+    catch(e){ d.ph = {}; localStorage.setItem(DRAFT_KEY, JSON.stringify(d)); }     // penyimpanan penuh: simpan teks saja
+  }catch(e){}
+}
+function saveDraftSoon(){ clearTimeout(draftTimer); draftTimer = setTimeout(saveDraftNow, 400); }
+function loadDraft(){
+  try{
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+    if (!d || !S.user || d.nik !== S.user.nik || !d.t || Date.now() - d.t > DRAFT_TTL) return null;
+    return d;
+  }catch(e){ return null; }
+}
+function restoreDraft(){
+  const d = loadDraft(); if (!d) return false;
+  if (d.insp){
+    const kodeUrl = BOOT.kode ? parseKode(BOOT.kode).toUpperCase() : '';
+    if (kodeUrl && kodeUrl !== d.insp.kode) return false;                 // QR lain baru dipindai: mulai dari awal
+    const a = findAlat(d.insp.kode); if (!a || !a.aktif) return false;
+    const items = DB.checklist.filter(c => c.jenis === a.jenis).sort((x, y) => x.no - y.no);
+    if (!items.length) return false;
+    const ans = {}; items.forEach(c => { if (d.insp.ans && d.insp.ans[c.id]) ans[c.id] = d.insp.ans[c.id]; });
+    clearPH('i:'); Object.keys(d.ph || {}).forEach(k => { if (k.indexOf('i:') === 0) PH[k] = d.ph[k]; });
+    S.insp = {kode: a.kode, items, ans, umum: d.insp.umum || '', reqId: d.insp.reqId || uuid()};
+    BOOT.kode = ''; toast('Isian inspeksi ' + a.kode + ' dipulihkan. Lanjutkan dari sini.');
+    return true;
+  }
+  if (d.sheet){
+    const t = DB.temuan.find(x => x.id === d.sheet.id); if (!t || t.status !== 'Open') return false;
+    clearPH('tc:'); Object.keys(d.ph || {}).forEach(k => { if (k.indexOf('tc:') === 0) PH[k] = d.ph[k]; });
+    S.tab = 'temuan'; S.sheet = {type: 'temuan', id: t.id, note: d.sheet.note || ''};
+    toast('Pengajuan close ' + t.id + ' dipulihkan.');
+    return true;
+  }
+  return false;
+}
+
+let toastTimer;
+function toast(msg, kind){
+  const el = $('#toast'); if (!el) return;
+  el.innerHTML = '<div class="t ' + (kind || '') + '">' + esc(msg) + '</div>';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.innerHTML = ''; }, 3800);
+}
+
+/* ------------------------------------------------------------------ foto dan QR */
+/* Foto kamera HP bisa 12-50 megapiksel. Jangan didekode penuh: di HP berRAM kecil browser mematikan tab,
+   halaman dimuat ulang, dan isian hilang. Ukuran diperkecil sejak proses dekode. */
+const dimsOf = im => ({w: im.naturalWidth || im.width, h: im.naturalHeight || im.height});
+/* Lebar piksel asli dibaca dari header file (JPEG/PNG) tanpa mendekode gambar. */
+async function peekWidth(file){
+  try{
+    const b = new Uint8Array(await file.slice(0, 262144).arrayBuffer());
+    if (b[0] === 0xFF && b[1] === 0xD8){
+      let i = 2;
+      while (i + 9 < b.length){
+        if (b[i] !== 0xFF){ i++; continue; }
+        const m = b[i + 1];
+        if (m === 0xFF){ i++; continue; }
+        if (m === 0xD8 || m === 0x01 || (m >= 0xD0 && m <= 0xD7)){ i += 2; continue; }
+        if (m >= 0xC0 && m <= 0xCF && m !== 0xC4 && m !== 0xC8 && m !== 0xCC) return (b[i + 7] << 8) | b[i + 8];
+        i += 2 + ((b[i + 2] << 8) | b[i + 3]);
+      }
+    } else if (b[0] === 0x89 && b[1] === 0x50){ return ((b[16] << 24) | (b[17] << 16) | (b[18] << 8) | b[19]) >>> 0; }
+  }catch(e){}
+  return 0;
+}
+function viaImage(file){
+  return new Promise((res, rej) => {
+    const u = URL.createObjectURL(file), im = new Image();
+    im.onload = () => res({im, u});
+    im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('Image gagal dimuat')); };
+    im.src = u;
+  });
+}
+/* Beberapa cara, dari yang paling hemat memori. Bila satu gagal (HP lama / memori kecil), coba berikutnya. */
+async function loadImg(file){
+  const w = await peekWidth(file), tries = [];
+  if (window.createImageBitmap){
+    if (w > 1400 || (!w && file.size > 400000)) tries.push(['bitmap-kecil', () => createImageBitmap(file, {resizeWidth: 1280, resizeQuality: 'low'}).then(bm => ({im: bm, u: null}))]);
+    tries.push(['bitmap', () => createImageBitmap(file).then(bm => ({im: bm, u: null}))]);
+  }
+  tries.push(['img', () => viaImage(file)]);
+  const why = [];
+  for (const t of tries){
+    try{
+      const r = await t[1](), d = dimsOf(r.im);
+      if (d.w > 0 && d.h > 0) return r;
+      freeImg(r); why.push(t[0] + ': kosong');
+    }catch(e){ why.push(t[0] + ': ' + String((e && (e.name || e.message)) || e).slice(0, 40)); }
+  }
+  const err = new Error('decode'); err.why = why.join(', '); throw err;
+}
+function freeImg(o){ try{ if (o.u) URL.revokeObjectURL(o.u); if (o.im && o.im.close) o.im.close(); }catch(e){} }
+function draw(im, max){
+  const d = dimsOf(im), s = Math.min(1, max / Math.max(d.w, d.h));
+  const w = Math.max(1, Math.round(d.w * s)), h = Math.max(1, Math.round(d.h * s));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d', {willReadFrequently: true}); x.drawImage(im, 0, 0, w, h);
+  return {c, x, w, h};
+}
+async function compress(file){
+  const o = await loadImg(file);
+  try{ const d = draw(o.im, 720), out = d.c.toDataURL('image/jpeg', 0.62); d.c.width = d.c.height = 0; return out; } finally { freeImg(o); }
+}
+async function decodeQR(file){
+  if (typeof jsQR !== 'function') throw new Error('lib');
+  const o = await loadImg(file);
+  try{
+    for (const max of [1000, 640, 1280]){
+      const d = draw(o.im, max), id = d.x.getImageData(0, 0, d.w, d.h);
+      const r = jsQR(id.data, d.w, d.h, {inversionAttempts: 'attemptBoth'});
+      d.c.width = d.c.height = 0;
+      if (r && r.data) return r.data;
+    }
+    return null;
+  } finally { freeImg(o); }
+}
+function parseKode(t){
+  t = String(t || '').trim();
+  try{ const k = new URL(t).searchParams.get('kode'); if (k) return k.trim(); }catch(e){}
+  return t;
+}
+const baseUrl = () => (DB && DB.config && DB.config.baseUrl) || '';
+const baseOk = () => baseUrl() && baseUrl().indexOf('ISI_SETELAH_DEPLOY') < 0;
+const qrText = kode => baseUrl() + '?kode=' + encodeURIComponent(kode);
+function qrSvg(text){
+  if (typeof qrcode !== 'function') return '<p class="muted">Pustaka QR belum termuat. Periksa koneksi internet.</p>';
+  const q = qrcode(0, 'M'); q.addData(text); q.make();
+  const n = q.getModuleCount(), m = 3; let d = '';
+  for (let r = 0; r < n; r++){
+    let run = 0;
+    for (let c = 0; c <= n; c++){
+      if (c < n && q.isDark(r, c)) run++;
+      else if (run){ d += 'M' + (c - run + m) + ' ' + (r + m) + 'h' + run + 'v1h-' + run + 'z'; run = 0; }
+    }
+  }
+  const s = n + 2 * m;   // QR selalu hitam di atas putih agar terbaca pemindai, di tema apa pun
+  return '<svg class="qr" viewBox="0 0 ' + s + ' ' + s + '" role="img" aria-label="QR ' + esc(text) + '" shape-rendering="crispEdges"><rect width="' + s + '" height="' + s + '" fill="#fff"/><path d="' + d + '" fill="#000"/></svg>';
+}
+function photoField(id, label, req){
+  const fid = 'f-' + id.replace(/[^A-Za-z0-9]/g, '-'), has = PH[id];
+  return '<div class="photo" data-ph="' + id + '"><input type="file" accept="image/*" id="' + fid + '" data-photo="' + id + '" hidden>' +
+    '<input type="file" accept="image/*" capture="environment" id="' + fid + '-c" data-photo="' + id + '" hidden>' +
+    '<button type="button" class="btn sm" data-act="pick" data-target="' + fid + '">' + ic('camera') + '<span class="pl">' + (has ? 'Ganti foto' : label) + '</span></button>' +
+    '<button type="button" class="btn sm ghost" data-act="pick" data-target="' + fid + '-c">Kamera langsung</button>' +
+    '<span class="req">' + req + '</span><img class="thumb" alt="Foto yang diambil" ' + (has ? 'src="' + has + '"' : 'hidden') + '></div>';
+}
+function refreshPhoto(id){
+  document.querySelectorAll('[data-ph="' + id + '"]').forEach(w => {
+    const im = w.querySelector('img'); im.src = PH[id]; im.hidden = false;
+    w.querySelector('.pl').textContent = 'Ganti foto';
+  });
+}
+
+/* ------------------------------------------------------------------ pemindai QR langsung (kamera di dalam halaman) */
+const LV = {video: null, stream: null, raf: 0, on: false, starting: false, state: 'idle', msg: '', blocked: false, paused: false, torchOk: false, torchOn: false, det: null, cv: null, cx: null, last: 0, busy: false, seen: {}};
+const onScanView = () => !!(S.user && !S.boot && S.tab === 'scan' && !S.insp && !S.done);
+function liveVideo(){
+  if (!LV.video){
+    const v = document.createElement('video');
+    v.setAttribute('playsinline', ''); v.setAttribute('muted', ''); v.muted = true; v.playsInline = true; v.className = 'lv';
+    LV.video = v;
+  }
+  return LV.video;
+}
+function setLive(state, msg){ LV.state = state; LV.msg = msg || ''; paintLive(); }
+function paintLive(){
+  const box = $('#viewer'); if (!box) return;
+  box.dataset.s = LV.state;
+  const m = $('#vmsg');
+  if (LV.state === 'live') m.innerHTML = '<span>Arahkan kamera ke QR pada alat</span>';
+  else if (LV.state === 'starting') m.innerHTML = '<span>Membuka kamera...</span>';
+  else m.innerHTML = '<p>' + esc(LV.msg || 'Kamera belum menyala.') + '</p><button type="button" class="btn sm primary" data-act="live-retry">' + (LV.blocked ? 'Coba lagi' : 'Nyalakan kamera') + '</button>';
+  const tb = $('#torch'); if (tb){ tb.hidden = !(LV.state === 'live' && LV.torchOk); tb.textContent = LV.torchOn ? 'Matikan senter' : 'Nyalakan senter'; }
+}
+function viewerHtml(){
+  return '<div class="viewer" id="viewer" data-s="' + LV.state + '"><div id="live-slot" class="slot"></div>' +
+    '<i class="c c1"></i><i class="c c2"></i><i class="c c3"></i><i class="c c4"></i><i class="ln"></i>' +
+    '<button type="button" class="vbtn" id="torch" data-act="torch" hidden>Nyalakan senter</button>' +
+    '<div class="vmsg" id="vmsg" role="status" aria-live="polite"></div></div>';
+}
+async function openCam(){
+  const md = navigator.mediaDevices, last = {e: null};
+  const tries = [
+    {video: {facingMode: {ideal: 'environment'}, width: {ideal: 640}, height: {ideal: 480}, frameRate: {ideal: 15, max: 24}}, audio: false},
+    {video: {facingMode: 'environment'}, audio: false},
+    {video: true, audio: false}
+  ];
+  for (const c of tries){
+    try{ return await md.getUserMedia(c); }
+    catch(e){ last.e = e; if (e && (e.name === 'NotAllowedError' || e.name === 'SecurityError')) break; }
+  }
+  throw last.e;
+}
+async function makeDetector(){
+  try{
+    if ('BarcodeDetector' in window){
+      const f = await BarcodeDetector.getSupportedFormats();
+      if (f.indexOf('qr_code') >= 0) return new BarcodeDetector({formats: ['qr_code']});
+    }
+  }catch(e){}
+  return null;
+}
+async function readFrame(){
+  const v = LV.video;
+  if (LV.det){
+    try{ const r = await LV.det.detect(v); return r && r.length ? (r[0].rawValue || null) : null; }
+    catch(e){ LV.det = null; }
+  }
+  if (typeof jsQR !== 'function') return null;
+  const s = Math.min(1, 640 / Math.max(v.videoWidth, v.videoHeight)), w = Math.max(1, Math.round(v.videoWidth * s)), h = Math.max(1, Math.round(v.videoHeight * s));
+  if (!LV.cv){ LV.cv = document.createElement('canvas'); LV.cx = LV.cv.getContext('2d', {willReadFrequently: true}); }
+  if (LV.cv.width !== w || LV.cv.height !== h){ LV.cv.width = w; LV.cv.height = h; }
+  LV.cx.drawImage(v, 0, 0, w, h);
+  const id = LV.cx.getImageData(0, 0, w, h), r = jsQR(id.data, w, h, {inversionAttempts: 'dontInvert'});
+  return r && r.data ? r.data : null;
+}
+function tick(ts){
+  if (!LV.on) return;
+  LV.raf = requestAnimationFrame(tick);
+  if (LV.busy || ts - LV.last < 150 || S.sheet) return;
+  const v = LV.video; if (!v || v.readyState < 2 || !v.videoWidth) return;
+  LV.last = ts; LV.busy = true;
+  readFrame().then(txt => { LV.busy = false; if (txt && LV.on) onLive(txt); }, () => { LV.busy = false; });
+}
+function onLive(txt){
+  const k = parseKode(txt).toUpperCase(), now = Date.now();
+  if (LV.seen[k] && now - LV.seen[k] < 3000) return;     // QR yang sama tidak diproses berulang
+  LV.seen[k] = now;
+  const er = startInspect(txt);
+  if (er) toast(er, 'err'); else { try{ if (navigator.vibrate) navigator.vibrate(60); }catch(e){} }
+}
+function stopLive(){
+  cancelAnimationFrame(LV.raf); LV.on = false; LV.busy = false; LV.torchOn = false; LV.torchOk = false;
+  if (LV.stream){ try{ LV.stream.getTracks().forEach(t => t.stop()); }catch(e){} LV.stream = null; }
+  if (LV.video){ try{ LV.video.pause(); LV.video.srcObject = null; }catch(e){} }
+  if (LV.state === 'live' || LV.state === 'starting'){ LV.state = 'idle'; LV.msg = 'Kamera dimatikan.'; }
+  paintLive();
+}
+async function startLive(){
+  if (LV.on || LV.starting) return;
+  if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)){ LV.blocked = true; return setLive('fail', 'Browser ini tidak mendukung kamera di dalam halaman. Pakai foto QR di bawah.'); }
+  try{
+    const pp = document.permissionsPolicy || document.featurePolicy;
+    if (pp && pp.allowsFeature && !pp.allowsFeature('camera')){ LV.blocked = true; return setLive('fail', 'Kamera di dalam halaman ini dibatasi oleh Google. Pakai foto QR di bawah, atau scan QR dengan kamera HP lalu ketuk tautannya.'); }
+  }catch(e){}
+  LV.starting = true; setLive('starting');
+  try{
+    const stream = await openCam();
+    if (!onScanView() || document.hidden){ stream.getTracks().forEach(t => t.stop()); LV.starting = false; LV.state = 'idle'; return; }
+    LV.stream = stream;
+    const v = liveVideo(); v.srcObject = stream; await v.play();
+    LV.det = await makeDetector();
+    if (!LV.det && typeof jsQR !== 'function') throw Object.assign(new Error('lib'), {name: 'LibError'});
+    const tr = stream.getVideoTracks()[0], caps = tr && tr.getCapabilities ? tr.getCapabilities() : {};
+    LV.torchOk = !!caps.torch;
+    try{ if (caps.focusMode && caps.focusMode.indexOf('continuous') >= 0) await tr.applyConstraints({advanced: [{focusMode: 'continuous'}]}); }catch(e){}
+    LV.on = true; LV.starting = false; LV.blocked = false; LV.last = 0;
+    setLive('live'); LV.raf = requestAnimationFrame(tick);
+  }catch(e){
+    LV.starting = false; stopLive(); LV.blocked = true;
+    const n = e && e.name; let m;
+    if (n === 'NotAllowedError' || n === 'SecurityError') m = 'Kamera tidak diizinkan. Izinkan kamera untuk situs ini di pengaturan browser. Jika Google yang memblokir, pakai foto QR di bawah.';
+    else if (n === 'NotFoundError' || n === 'OverconstrainedError') m = 'Kamera tidak ditemukan di perangkat ini.';
+    else if (n === 'NotReadableError' || n === 'AbortError') m = 'Kamera tidak bisa dibuka. Tutup aplikasi lain atau kosongkan memori HP, lalu coba lagi.';
+    else if (n === 'LibError') m = 'Pemindai QR belum termuat. Periksa koneksi internet.';
+    else m = 'Kamera tidak bisa dipakai di halaman ini. Pakai foto QR di bawah.';
+    setLive('fail', m);
+  }
+}
+function mountLive(){
+  const slot = $('#live-slot'); if (!slot) return;
+  slot.appendChild(liveVideo()); paintLive();
+  if (LV.on){ LV.video.play().catch(() => {}); return; }
+  if (!LV.starting && !LV.blocked && !LV.paused && !document.hidden) startLive();
+}
+function resumeLive(){ LV.paused = false; if (onScanView() && !LV.blocked) startLive(); }
+async function toggleTorch(){
+  const tr = LV.stream && LV.stream.getVideoTracks()[0]; if (!tr) return;
+  try{ await tr.applyConstraints({advanced: [{torch: !LV.torchOn}]}); LV.torchOn = !LV.torchOn; }
+  catch(e){ toast('Senter tidak bisa dinyalakan di HP ini.', 'err'); }
+  paintLive();
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopLive(); else if (onScanView() && !LV.blocked && !LV.paused) startLive(); });
+window.addEventListener('pagehide', stopLive);
+
+/* ------------------------------------------------------------------ tampilan: umum */
+function headerHtml(){
+  if (S.insp){
+    const a = findAlat(S.insp.kode);
+    return '<header class="top"><div class="wrap top-in"><button class="icon-btn" data-act="insp-back" aria-label="Kembali">' + ic('back') + '</button>' +
+      '<div class="top-t"><h1 class="ttl mono">' + esc(a.kode) + '</h1><div class="sub">' + esc(a.jenis) + ' · ' + esc(a.lokasi) + '</div></div></div></header>';
+  }
+  if (S.done) return '<header class="top"><div class="wrap top-in"><div class="top-t"><h1 class="ttl">Inspeksi tersimpan</h1></div></div></header>';
+  const T = {home: 'Inspeksi K3', scan: 'Scan alat', temuan: 'Temuan', admin: 'Admin K3'};
+  const ini = S.user.nama.split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  return '<header class="top"><div class="wrap top-in"><div class="top-t"><h1 class="ttl">' + T[S.tab] + '' + '</h1>' +
+    (S.tab === 'home' && company() ? '<div class="sub">' + esc(company()) + '</div>' : '') + '</div>' +
+    '<button class="who" data-act="user" aria-label="Akun ' + esc(S.user.nama) + '"><span class="av">' + esc(ini) + '</span></button></div></header>';
+}
+function tabsHtml(){
+  const open = DB.temuan.filter(t => t.status !== 'Closed').length;
+  const tabs = [['home', 'Beranda', 'home'], ['scan', 'Scan', 'scan'], ['temuan', 'Temuan', 'alert']];
+  if (isAdmin()) tabs.push(['admin', 'Admin', 'shield']);
+  return '<nav class="tabs" aria-label="Menu utama"><div class="wrap tabs-in">' + tabs.map(t =>
+    '<button class="tab ' + (t[0] === 'scan' ? 'scan' : '') + '" data-act="goto" data-tab="' + t[0] + '"' + (S.tab === t[0] ? ' aria-current="page"' : '') + '>' +
+    (t[0] === 'scan' ? '<span class="bubble">' + ic(t[2]) + '</span>' : ic(t[2])) + '<span>' + t[1] + '</span>' +
+    (t[0] === 'temuan' && open ? '<span class="badge" aria-label="' + open + ' temuan belum selesai">' + open + '</span>' : '') + '</button>').join('') + '</div></nav>';
+}
+function stPill(s){
+  const m = {'Open': ['bad', 'Open'], 'Menunggu Verifikasi': ['warn', 'Menunggu verifikasi'], 'Closed': ['ok', 'Closed'],
+    'Sesuai Jadwal': ['ok', 'Sesuai jadwal'], 'Terlambat': ['bad', 'Terlambat'], 'Belum Pernah': ['warn', 'Belum pernah']}[s] || ['info', s];
+  return '<span class="pill ' + m[0] + '">' + m[1] + '</span>';
+}
+
+/* ------------------------------------------------------------------ tampilan: login */
+function loginView(){
+  const co = company();
+  return '<div class="wrap login stack" style="gap:28px"><div><h1>Inspeksi<br>K3</h1>' + (co ? '<p class="co">' + esc(co) + '</p>' : '') + '</div>' +
+    (BOOT.kode ? '<div class="note info">Masuk dulu untuk membuka checklist <strong class="mono">' + esc(BOOT.kode) + '</strong>.</div>' : '') +
+    '<form id="loginform" class="stack-s" novalidate><label class="l" for="nik">NIK karyawan</label>' +
+    '<input type="text" id="nik" inputmode="numeric" autocomplete="off" maxlength="30" value="' + esc(S.nikTmp) + '"' + (S.needPin ? ' readonly' : '') + '>' +
+    (S.needPin ? '<label class="l" for="pin">PIN</label><input type="password" id="pin" inputmode="numeric" autocomplete="current-password" maxlength="8">' : '') +
+    '<p class="err" id="login-err" role="alert">' + esc(S.loginMsg) + '</p><button class="btn primary block" type="submit" id="login-btn">Masuk</button></form>' +
+    (S.needPin ? '<button class="btn ghost" data-act="login-back">Ganti NIK</button>' : '') + '</div>';
+}
+function loadingView(){
+  return '<div class="wrap login"><h1 class="ttl" style="font-size:40px">Inspeksi K3</h1><p class="muted" style="margin-top:10px">Memuat data...</p></div>';
+}
+
+/* ------------------------------------------------------------------ tampilan: beranda */
+function spark(rows){
+  const W = 300, H = 64, top = 8, bot = 6, n = rows.length;
+  const max = Math.max.apply(null, rows.map(r => r.smh).concat([1]));
+  const x = i => (i + 0.5) * W / n, y = v => H - bot - (v / max) * (H - top - bot);
+  const pts = rows.map((r, i) => [x(i), y(r.smh)]);
+  const line = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('');
+  const area = line + 'L' + pts[n - 1][0].toFixed(1) + ' ' + (H - bot) + 'L' + pts[0][0].toFixed(1) + ' ' + (H - bot) + 'Z';
+  const lti = rows.map((r, i) => r.lti > 0 ? '<circle class="sp-lti" cx="' + pts[i][0].toFixed(1) + '" cy="' + pts[i][1].toFixed(1) + '" r="5"/>' : '').join('');
+  const e = pts[n - 1], hasLti = rows.some(r => r.lti > 0);
+  return '<svg class="spark" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Grafik Safe Man-Hours kumulatif ' + n + ' bulan terakhir, nilai terakhir ' + fmtN(rows[n - 1].smh) + ' jam">' +
+    '<line class="sp-base" x1="0" y1="' + (H - bot) + '" x2="' + W + '" y2="' + (H - bot) + '"/><path class="sp-area" d="' + area + '"/><path class="sp-line" d="' + line + '"/>' + lti +
+    '<circle class="sp-end" cx="' + e[0].toFixed(1) + '" cy="' + e[1].toFixed(1) + '" r="5"/></svg>' +
+    '<div class="spark-x" style="grid-template-columns:repeat(' + n + ',1fr)">' + rows.map(r => '<span>' + esc(fMon.format(parseYM(r.periode))) + '</span>').join('') + '</div>' +
+    (hasLti ? '<div class="spark-lg"><i></i>Bulan dengan kecelakaan LTI (hitungan kembali ke nol)</div>' : '');
+}
+function homeView(){
+  const rows = statRows(), last = rows[rows.length - 1], T = temuanCounts(), C = compliance();
+  let hero;
+  if (!last){
+    hero = '<section class="hero"><div class="lbl">Safe Man-Hours</div><p class="hero-sub" style="margin-top:10px">Belum ada data statistik. Admin K3 mengisinya di tab Admin.</p></section>';
+  } else {
+    const lti = rows.filter(r => r.lti > 0), since = lti.length ? 'tanpa kecelakaan kerja (LTI) sejak ' + fMonth.format(parseYM(lti[lti.length - 1].periode)) : 'belum ada LTI tercatat';
+    hero = '<section class="hero" aria-label="Safe Man-Hours"><div class="lbl">Safe Man-Hours</div><div class="hero-num"><b>' + fmtN(last.smh) + '</b><span>jam</span></div>' +
+      '<p class="hero-sub">' + since + '</p>' + (rows.length > 1 ? spark(rows.slice(-6)) : '') +
+      '<dl class="hero-stats"><div><dt>Frequency Rate</dt><dd>' + (last.fr == null ? '-' : nf2.format(last.fr)) + '</dd></div><div><dt>Severity Rate</dt><dd>' + (last.sr == null ? '-' : nf2.format(last.sr)) + '</dd></div><div><dt>Near miss</dt><dd>' + fmtN(last.nm) + '</dd></div></dl>' +
+      '<p class="per">Data statistik periode ' + esc(fMonth.format(parseYM(last.periode))) + '</p></section>';
+  }
+  const done = T.total ? Math.round(T.closed / T.total * 100) : 0, w = n => T.total ? (n / T.total * 100).toFixed(1) : 0;
+  const tem = '<button class="panel tap" data-act="goto" data-tab="temuan" aria-label="Lihat semua temuan"><div class="sec-h"><span class="lbl">Temuan</span><span class="pct">' + done + '% selesai</span></div>' +
+    '<div class="triple"><div><b>' + T.open + '</b><span><i class="dot bad"></i>Open</span></div><div><b>' + T.wait + '</b><span><i class="dot warn"></i>Verifikasi</span></div><div><b>' + T.closed + '</b><span><i class="dot ok"></i>Selesai</span></div></div>' +
+    '<div class="bar" role="img" aria-label="Closed ' + T.closed + ', menunggu verifikasi ' + T.wait + ', open ' + T.open + ' dari ' + T.total + ' temuan"><i class="ok" style="width:' + w(T.closed) + '%"></i><i class="warn" style="width:' + w(T.wait) + '%"></i><i class="bad" style="width:' + w(T.open) + '%"></i></div></button>';
+  const pc = C.total ? Math.round(C.ok / C.total * 100) : 0;
+  const cats = Object.keys(C.cat).map(k => '<div class="cat"><span>' + esc(k) + '</span><div class="bar"><i class="ok" style="width:' + (C.cat[k].ok / C.cat[k].n * 100).toFixed(0) + '%"></i></div><span class="n">' + C.cat[k].ok + '/' + C.cat[k].n + '</span></div>').join('');
+  const insp = '<section class="panel"><div class="sec-h"><span class="lbl">Inspeksi alat</span><span class="pct">' + C.month + ' inspeksi bulan ini</span></div>' +
+    '<div class="big-pct"><b>' + pc + '%</b><span class="muted">' + C.ok + ' dari ' + C.total + ' alat sesuai jadwal</span></div>' + cats + '</section>';
+  const acts = [];
+  if (T.wait) acts.push('<li><button class="act-row" data-act="goto" data-tab="temuan" data-filter="Menunggu Verifikasi"><span class="act-ic warn">' + ic('shield') + '</span><span><span class="act-t">' + T.wait + ' temuan menunggu verifikasi</span><br><span class="act-d">' + (isAdmin() ? 'Periksa hasil perbaikan lalu setujui atau tolak.' : 'Menunggu Admin K3.') + '</span></span></button></li>');
+  if (T.late) acts.push('<li><button class="act-row" data-act="goto" data-tab="temuan" data-filter="Open"><span class="act-ic bad">' + ic('alert') + '</span><span><span class="act-t">' + T.late + ' temuan belum selesai lebih dari ' + LATE_DAYS + ' hari</span><br><span class="act-d">Perlu perbaikan atau pengajuan close.</span></span></button></li>');
+  C.late.concat(C.never).slice(0, 4).forEach(a => {
+    const l = lastInsp(a.kode);
+    acts.push('<li><div class="act-row"><span class="act-ic ' + (l ? 'bad' : 'warn') + '">' + ic('clock') + '</span><span><span class="act-t"><span class="mono">' + esc(a.kode) + '</span> perlu diinspeksi</span><br><span class="act-d">' + esc(a.jenis) + ' · ' + esc(a.lokasi) + ' · ' + (l ? 'terakhir ' + rel(daysBetween(new Date(l), new Date())) : 'belum pernah diinspeksi') + '</span></span></div></li>');
+  });
+  C.expiring.slice(0, 3).forEach(a => {
+    const dd = daysBetween(new Date(), parseYMD(a.kadaluarsa));
+    acts.push('<li><div class="act-row"><span class="act-ic info">' + ic('box') + '</span><span><span class="act-t"><span class="mono">' + esc(a.kode) + '</span> ' + (dd < 0 ? 'sudah kadaluarsa' : 'mendekati kadaluarsa') + '</span><br><span class="act-d">' + esc(fDate.format(parseYMD(a.kadaluarsa))) + (dd >= 0 ? ' (' + dd + ' hari lagi)' : '') + ' · ' + esc(a.lokasi) + '</span></span></div></li>');
+  });
+  const aksi = '<section><div class="sec-h"><span class="lbl">Perlu tindakan</span></div>' +
+    (acts.length ? '<ul class="rows">' + acts.join('') + '</ul>' : '<div class="panel empty">Semua inspeksi dan temuan sesuai jadwal.</div>') + '</section>';
+  return '<div class="stack">' + hero + tem + insp + aksi + '</div>';
+}
+
+/* ------------------------------------------------------------------ tampilan: scan */
+function scanView(){
+  return '<div class="stack"><input type="file" id="scanfile" accept="image/*" hidden><input type="file" id="scanfile2" accept="image/*" capture="environment" hidden>' +
+    viewerHtml() +
+    '<form id="kodeform" class="stack-s" novalidate><label class="l" for="kode">QR rusak atau tidak terbaca? Ketik kode alat</label><div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px">' +
+    '<input type="text" id="kode" autocomplete="off" autocapitalize="characters" placeholder="Contoh: APAR-001"><button class="btn primary" type="submit">Buka</button></div><p class="err" id="kode-err" role="alert"></p></form>' +
+    '<div class="stack-s"><span class="l">Kamera tidak mau menyala? Baca QR dari foto</span><div class="two"><button type="button" class="btn" data-act="pick" data-target="scanfile">Pilih dari galeri</button><button type="button" class="btn" data-act="pick" data-target="scanfile2">Foto lewat kamera HP</button></div></div></div>';
+}
+
+/* ------------------------------------------------------------------ tampilan: inspeksi */
+function itemHtml(c){
+  const st = S.insp.ans[c.id] || {}, bad = st.ans === 'Tidak OK';
+  return '<li class="chk ' + (bad ? 'is-bad' : '') + '" id="chk-' + esc(c.id) + '"><div class="chk-q"><span class="chk-no">' + c.no + '</span><p>' + esc(c.q) + '</p></div>' +
+    '<div class="seg" role="group" aria-label="Jawaban butir ' + c.no + '">' + ['OK', 'Tidak OK', 'N/A'].map(v =>
+      '<button type="button" class="seg-b seg-' + slug(v) + (st.ans === v ? ' on' : '') + '" data-act="ans" data-id="' + esc(c.id) + '" data-v="' + v + '" aria-pressed="' + (st.ans === v) + '">' + v + '</button>').join('') + '</div>' +
+    (bad ? '<div class="chk-more"><div class="field"><label class="l" for="note-' + esc(c.id) + '">Catatan temuan <span class="req">wajib</span></label>' +
+      '<textarea id="note-' + esc(c.id) + '" data-note="' + esc(c.id) + '" rows="2" placeholder="Jelaskan kondisi yang tidak sesuai">' + esc(st.note || '') + '</textarea></div>' +
+      photoField('i:' + c.id, 'Foto temuan', c.fotoWajib ? 'wajib' : 'opsional') + '</div>' : '') + '</li>';
+}
+function inspStatus(){
+  const miss = []; let n = 0;
+  S.insp.items.forEach(c => {
+    const a = S.insp.ans[c.id];
+    if (!a || !a.ans){ miss.push({id: c.id, t: 'Butir ' + c.no + ' belum dijawab'}); return; }
+    n++;
+    if (a.ans === 'Tidak OK'){
+      if (!(a.note || '').trim()) miss.push({id: c.id, t: 'Butir ' + c.no + ': isi catatan temuan'});
+      else if (c.fotoWajib && !PH['i:' + c.id]) miss.push({id: c.id, t: 'Butir ' + c.no + ': foto temuan wajib'});
+    }
+  });
+  return {n, total: S.insp.items.length, miss};
+}
+function updateSubmit(){
+  if (!S.insp) return;
+  const s = inspStatus(), b = $('#btn-submit'); if (!b) return;
+  $('#sb-n').textContent = s.n + '/' + s.total;
+  $('#sb-hint').textContent = s.miss.length ? s.miss[0].t : 'Siap dikirim';
+  b.setAttribute('aria-disabled', s.miss.length ? 'true' : 'false');
+}
+function inspectView(){
+  const a = findAlat(S.insp.kode), l = lastInsp(a.kode), s = inspStatus();
+  const card = '<section class="panel alat-card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap"><span class="pill info">' + esc(kategoriOf(a)) + '</span>' + stPill(statusAlat(a)) + '</div>' +
+    '<dl class="kv"><dt>Alat</dt><dd>' + esc(a.merk || a.jenis) + '</dd><dt>Area</dt><dd>' + esc(a.area) + ' · ' + esc(a.lokasi) + '</dd><dt>Frekuensi</dt><dd>' + esc(freqOf(a)) + '</dd><dt>Terakhir</dt><dd>' + (l ? esc(fDT(new Date(l))) : 'Belum pernah diinspeksi') + '</dd>' +
+    (a.kadaluarsa ? '<dt>Kadaluarsa</dt><dd>' + esc(fDate.format(parseYMD(a.kadaluarsa))) + '</dd>' : '') + '</dl></section>';
+  return '<div class="stack"><div id="discard" class="note warn discard" hidden><span>Buang isian inspeksi ini?</span><span style="display:flex;gap:8px"><button class="btn sm" data-act="insp-keep">Lanjutkan</button><button class="btn sm danger" data-act="insp-discard">Buang</button></span></div>' + card +
+    '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="lbl">Checklist · ' + S.insp.items.length + ' butir</span><button class="btn sm ghost" data-act="ans-all">Tandai semua OK</button></div>' +
+    '<ol class="chk-list">' + S.insp.items.map(itemHtml).join('') + '</ol>' +
+    '<div class="field"><label class="l" for="umum">Catatan umum <span class="req">opsional</span></label><textarea id="umum" rows="2" placeholder="Misalnya: alat dipindahkan ke rak sebelah">' + esc(S.insp.umum || '') + '</textarea></div></div>' +
+    '<div class="submitbar"><div class="wrap"><div class="sb-info"><strong id="sb-n">' + s.n + '/' + s.total + '</strong> butir terjawab<span class="sb-hint" id="sb-hint">' + esc(s.miss.length ? s.miss[0].t : 'Siap dikirim') + '</span></div>' +
+    '<button class="btn primary" id="btn-submit" data-act="submit-insp" aria-disabled="' + (s.miss.length ? 'true' : 'false') + '">Kirim inspeksi</button></div></div>';
+}
+function doneView(){
+  const d = S.done, ts = d.temuan;
+  return '<div class="done"><div class="done-ic">' + ic('check') + '</div><h2>' + (ts.length ? ts.length + ' temuan dibuat' : 'Semua butir OK') + '</h2>' +
+    '<p class="muted"><span class="mono">' + esc(d.id) + '</span><br>' + esc(d.jenis) + ' <span class="mono">' + esc(d.kode) + '</span> · ' + d.n + ' butir diperiksa</p></div>' +
+    (ts.length ? '<ul class="rows" style="margin-top:20px">' + ts.map(t => '<li><div class="tb"><span class="tl"><span class="mono">' + t.id + '</span>' + stPill('Open') + '</span><span class="td">' + esc(t.desk) + '</span><span class="tm">PIC: ' + esc(t.pic || '-') + '</span></div></li>').join('') + '</ul>' : '') +
+    '<div class="stack-s" style="margin-top:24px"><button class="btn primary block" data-act="done-scan">' + ic('scan') + 'Scan alat berikutnya</button><button class="btn block" data-act="done-home">Kembali ke beranda</button></div>';
+}
+
+/* ------------------------------------------------------------------ tampilan: temuan */
+function temuanView(){
+  const T = temuanCounts(), f = S.filter;
+  const chips = [['Semua', T.total], ['Open', T.open], ['Menunggu Verifikasi', T.wait], ['Closed', T.closed]].map(c =>
+    '<button class="fchip" data-act="filter" data-f="' + c[0] + '" aria-pressed="' + (f === c[0]) + '">' + (c[0] === 'Menunggu Verifikasi' ? 'Verifikasi' : c[0]) + ' <small>' + c[1] + '</small></button>').join('');
+  const ord = isAdmin() ? {'Menunggu Verifikasi': 0, 'Open': 1, 'Closed': 2} : {'Open': 0, 'Menunggu Verifikasi': 1, 'Closed': 2};
+  const list = DB.temuan.filter(t => f === 'Semua' || t.status === f).sort((a, b) => ord[a.status] - ord[b.status] || (a.status === 'Closed' ? (a.tgl < b.tgl ? 1 : -1) : (a.tgl < b.tgl ? -1 : 1)));
+  const rows = list.map(t => {
+    const a = findAlat(t.kode) || {};
+    return '<li><button class="trow" data-act="open-temuan" data-id="' + t.id + '"><span class="th">' + ic('camera') + '</span><span class="tb"><span class="tl"><span class="mono">' + t.id + '</span>' + stPill(t.status) + '</span>' +
+      '<span class="td">' + esc(t.desk) + '</span><span class="tm">' + esc(t.kode) + ' · ' + esc(a.lokasi || '') + ' · ' + umur(t) + ' hari</span></span></button></li>';
+  }).join('');
+  return '<div class="stack"><div class="filters" role="group" aria-label="Filter status">' + chips + '</div>' +
+    (rows ? '<ul class="rows">' + rows + '</ul>' : '<div class="panel empty">Tidak ada temuan dengan status ini.</div>') + '</div>';
+}
+function photoBlock(ref, label){
+  return (ref && /[-\w]{25,}/.test(ref)) ? '<figure class="fig" data-foto="' + esc(ref) + '" data-label="' + esc(label) + '"><div class="fig ph">' + ic('camera') + '<span>Memuat ' + esc(label.toLowerCase()) + '...</span></div></figure>'
+    : '<div class="fig ph">' + ic('camera') + '<span>' + esc(label) + ': tanpa foto</span></div>';
+}
+function figHtml(url, label){ return '<img src="' + url + '" alt="' + esc(label) + '"><figcaption>' + esc(label) + '</figcaption>'; }
+async function loadFotos(){
+  const els = Array.prototype.slice.call(document.querySelectorAll('figure[data-foto]'));
+  for (const el of els){
+    const ref = el.dataset.foto, label = el.dataset.label;
+    try{
+      if (!FOTO[ref]) FOTO[ref] = await call('getFoto', {ref});
+      if (el.isConnected) el.innerHTML = figHtml(FOTO[ref], label);
+    }catch(e){
+      if (el.isConnected) el.innerHTML = '<div class="fig ph">' + ic('camera') + '<span>' + esc(label) + ' tidak dapat dimuat</span></div>';
+    }
+  }
+}
+function temuanSheet(t){
+  const a = findAlat(t.kode) || {}, c = DB.checklist.find(x => x.id === t.butir), admin = isAdmin();
+  const s2 = t.tglClose, s3 = t.status === 'Closed';
+  let act = '';
+  if (t.status === 'Open'){
+    act = (t.catVerif ? '<div class="note warn"><strong>Ditolak admin.</strong> ' + esc(t.catVerif) + '</div>' : '') +
+      '<div class="stack-s"><span class="lbl">Ajukan close</span><div class="field"><label class="l" for="tc-note">Catatan perbaikan <span class="req">wajib</span></label><textarea id="tc-note" rows="2" placeholder="Apa yang sudah diperbaiki">' + esc((S.sheet && S.sheet.note) || '') + '</textarea></div>' +
+      photoField('tc:' + t.id, 'Foto perbaikan', 'wajib') + '<p class="err" id="tc-err" role="alert"></p><button class="btn primary block" data-act="ajukan" data-id="' + t.id + '">Ajukan close</button></div>';
+  } else if (t.status === 'Menunggu Verifikasi'){
+    act = '<div class="stack-s"><span class="lbl">Hasil perbaikan</span><p>' + esc(t.catClose) + '</p>' + photoBlock(t.fotoClose, 'Foto perbaikan') + '</div>' +
+      (admin ? '<div class="stack-s"><span class="lbl">Verifikasi Admin K3</span><div class="field"><label class="l" for="tv-note">Catatan verifikasi</label><textarea id="tv-note" rows="2" placeholder="Wajib diisi jika ditolak"></textarea></div><p class="err" id="tv-err" role="alert"></p>' +
+        '<div class="two"><button class="btn danger" data-act="tolak" data-id="' + t.id + '">Tolak</button><button class="btn ok" data-act="setuju" data-id="' + t.id + '">Setujui dan close</button></div></div>'
+        : '<div class="note info">Menunggu verifikasi Admin K3.</div>');
+  } else {
+    act = '<div class="stack-s"><span class="lbl">Hasil perbaikan</span><p>' + esc(t.catClose) + '</p>' + photoBlock(t.fotoClose, 'Foto perbaikan') + '</div>' + (t.catVerif ? '<div class="note info"><strong>Catatan admin.</strong> ' + esc(t.catVerif) + '</div>' : '');
+  }
+  const body = '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + stPill(t.status) + '<span class="muted">' + umur(t) + ' hari' + (t.status === 'Closed' ? ' sampai selesai' : ' sejak dilaporkan') + '</span></div>' +
+    '<dl class="kv"><dt>Alat</dt><dd><span class="mono">' + esc(t.kode) + '</span> · ' + esc(a.jenis || '') + '</dd><dt>Lokasi</dt><dd>' + esc(a.area || '') + ' · ' + esc(a.lokasi || '') + '</dd>' +
+    '<dt>Butir</dt><dd>' + esc(c ? c.q : t.butir) + '</dd><dt>PIC</dt><dd>' + esc(t.pic || '-') + '</dd></dl>' +
+    '<div class="stack-s"><span class="lbl">Temuan</span><p>' + esc(t.desk) + '</p>' + photoBlock(t.foto, 'Foto temuan') + '</div>' +
+    '<ol class="tl2"><li class="stp"><span class="mk">' + ic('check') + '</span><span><b>Dilaporkan</b><small>' + esc(fDT(new Date(t.tgl))) + ' · ' + esc(t.pelapor || '-') + '</small></span></li>' +
+    '<li class="' + (s2 ? 'stp' : '') + '"><span class="mk">' + (s2 ? ic('check') : '') + '</span><span><b>Diajukan close</b><small>' + (s2 ? esc(fDT(new Date(t.tglClose))) + ' · ' + esc(t.pengaju || '-') : 'Belum diajukan') + '</small></span></li>' +
+    '<li class="' + (s3 ? 'stp' : '') + '"><span class="mk">' + (s3 ? ic('check') : '') + '</span><span><b>Diverifikasi admin</b><small>' + (s3 ? esc(fDT(new Date(t.tglVerif))) + ' · ' + esc(t.verifikator || '-') : 'Belum diverifikasi') + '</small></span></li></ol>' + act;
+  return {title: 'Temuan <span class="mono" style="font-size:16px;text-transform:none">' + t.id + '</span>', text: 'Temuan ' + t.id, body};
+}
+
+/* ------------------------------------------------------------------ tampilan: admin */
+function defaultPeriode(){
+  const rows = statRows(), cur = ym(new Date());
+  if (!rows.length) return cur;
+  const d = parseYM(rows[rows.length - 1].periode); d.setMonth(d.getMonth() + 1);
+  return ym(d) > cur ? cur : ym(d);
+}
+function adminView(){
+  return '<div class="stack"><div class="tabs2" role="group" aria-label="Bagian admin"><button data-act="admin-tab" data-t="stat" aria-pressed="' + (S.adminTab === 'stat') + '">Statistik K3</button><button data-act="admin-tab" data-t="alat" aria-pressed="' + (S.adminTab === 'alat') + '">Alat dan QR</button></div>' +
+    (S.adminTab === 'stat' ? statAdmin() : alatAdmin()) + '</div>';
+}
+function statAdmin(){
+  const p = defaultPeriode(), rows = statRows(), ex = rows.find(r => r.periode === p), prev = rows.filter(r => r.periode < p).pop() || rows[rows.length - 1];
+  const v = ex || {tk: prev ? prev.tk : '', jam: prev ? prev.jam : '', lti: 0, hh: 0, nm: 0};
+  const step = (id, val) => '<div class="stepper"><button type="button" data-act="step" data-t="' + id + '" data-d="-1" aria-label="Kurangi">&minus;</button><input type="number" id="' + id + '" inputmode="numeric" min="0" value="' + val + '"><button type="button" data-act="step" data-t="' + id + '" data-d="1" aria-label="Tambah">+</button></div>';
+  const form = '<form id="statform" class="panel stack-s" novalidate><div class="sec-h" style="margin:0"><span class="lbl">Isi statistik bulanan</span></div>' +
+    '<div class="field"><label class="l" for="f-periode">Periode</label><input type="month" id="f-periode" value="' + p + '"></div>' +
+    '<div class="grid2"><div class="field"><label class="l" for="f-tk">Jumlah tenaga kerja</label><input type="number" id="f-tk" inputmode="numeric" min="0" value="' + v.tk + '"></div>' +
+    '<div class="field"><label class="l" for="f-jam">Jam kerja</label><input type="number" id="f-jam" inputmode="numeric" min="0" value="' + v.jam + '"></div></div>' +
+    '<div class="field"><label class="l" for="f-lti">Kecelakaan kerja (LTI)</label>' + step('f-lti', v.lti) + '</div>' +
+    '<div class="grid2"><div class="field"><label class="l" for="f-hh">Hari hilang</label>' + step('f-hh', v.hh) + '</div><div class="field"><label class="l" for="f-nm">Near miss</label>' + step('f-nm', v.nm) + '</div></div>' +
+    '<dl class="live" aria-live="polite"><div><dt>Safe Man-Hours</dt><dd id="lv-smh">-</dd></div><div><dt>Frequency Rate</dt><dd id="lv-fr">-</dd></div><div><dt>Severity Rate</dt><dd id="lv-sr">-</dd></div></dl>' +
+    '<p class="err" id="stat-err" role="alert"></p><button class="btn primary block" type="submit" id="stat-btn">' + (ex ? 'Perbarui' : 'Simpan') + ' statistik</button></form>';
+  const tbl = rows.length ? '<section><div class="sec-h"><span class="lbl">Riwayat</span></div><div class="tbl-w"><table><thead><tr><th>Periode</th><th>Jam kerja</th><th>LTI</th><th>Near miss</th><th>Safe M-H</th></tr></thead><tbody>' +
+    rows.slice().reverse().map(r => '<tr><td>' + esc(fMonth.format(parseYM(r.periode))) + '</td><td>' + fmtN(r.jam) + '</td><td>' + r.lti + '</td><td>' + r.nm + '</td><td>' + fmtN(r.smh) + '</td></tr>').join('') + '</tbody></table></div></section>' : '';
+  return form + tbl;
+}
+function alatAdmin(){
+  const list = DB.alat.map(a => '<li><div class="arow"><div class="mid"><span class="mono">' + esc(a.kode) + '</span><small>' + esc(a.jenis) + ' · ' + esc(a.lokasi) + '</small></div>' + stPill(statusAlat(a)) +
+    '<button class="icon-btn" data-act="show-qr" data-kode="' + esc(a.kode) + '" aria-label="Tampilkan QR ' + esc(a.kode) + '">' + ic('qr') + '</button></div></li>').join('');
+  const jopt = DB.jenis.map(j => '<option>' + esc(j.jenis) + '</option>').join('');
+  const fadd = '<details class="dt"><summary>Tambah alat baru</summary><div class="dt-b"><form id="alatform" class="stack-s" novalidate>' +
+    '<div class="field"><label class="l" for="a-jenis">Jenis alat</label><select id="a-jenis">' + jopt + '</select></div>' +
+    '<div class="field"><label class="l" for="a-kode">Kode alat</label><input type="text" id="a-kode" autocapitalize="characters" value="' + esc(nextKode(DB.jenis[0] ? DB.jenis[0].jenis : '')) + '"></div>' +
+    '<div class="field"><label class="l" for="a-merk">Merk atau spesifikasi</label><input type="text" id="a-merk"></div>' +
+    '<div class="grid2"><div class="field"><label class="l" for="a-area">Area</label><input type="text" id="a-area"></div><div class="field"><label class="l" for="a-lok">Lokasi detail</label><input type="text" id="a-lok"></div></div>' +
+    '<div class="grid2"><div class="field"><label class="l" for="a-pic">PIC</label><input type="text" id="a-pic"></div><div class="field"><label class="l" for="a-kad">Kadaluarsa <span class="req">opsional</span></label><input type="date" id="a-kad"></div></div>' +
+    '<p class="err" id="a-err" role="alert"></p><button class="btn primary block" type="submit">Simpan alat</button></form></div></details>';
+  const fj = '<details class="dt"><summary>Tambah jenis alat baru</summary><div class="dt-b"><form id="jenisform" class="stack-s" novalidate>' +
+    '<div class="field"><label class="l" for="j-nama">Nama jenis</label><input type="text" id="j-nama" placeholder="Contoh: Mesin Bor"></div>' +
+    '<div class="grid2"><div class="field"><label class="l" for="j-kat">Kategori</label><select id="j-kat">' + KATEGORI.map(k => '<option>' + k + '</option>').join('') + '</select></div>' +
+    '<div class="field"><label class="l" for="j-pre">Awalan kode</label><input type="text" id="j-pre" maxlength="5" autocapitalize="characters" placeholder="BOR"></div></div>' +
+    '<div class="field"><label class="l" for="j-frek">Frekuensi inspeksi</label><select id="j-frek"><option>Harian</option><option>Mingguan</option><option selected>Bulanan</option><option>Tahunan</option></select></div>' +
+    '<div class="field"><label class="l" for="j-q">Butir checklist <span class="req">satu per baris</span></label><textarea id="j-q" rows="5" placeholder="Kabel tidak terkelupas&#10;Pelindung terpasang"></textarea></div>' +
+    '<p class="err" id="j-err" role="alert"></p><button class="btn primary block" type="submit">Simpan jenis alat</button></form></div></details>';
+  return fadd + fj + '<section><div class="sec-h"><span class="lbl">Daftar alat · ' + DB.alat.length + '</span></div><ul class="rows">' + list + '</ul></section>';
+}
+function nextKode(jenis){
+  const j = jenisOf(jenis); if (!j) return '';
+  let max = 0; DB.alat.forEach(a => { if (a.kode.indexOf(j.prefix + '-') === 0){ const n = parseInt(a.kode.slice(j.prefix.length + 1), 10); if (n > max) max = n; } });
+  return j.prefix + '-' + String(max + 1).padStart(3, '0');
+}
+function livePreview(){
+  const g = id => { const e = document.getElementById(id); return e ? Math.max(0, parseInt(e.value, 10) || 0) : 0; };
+  const p = $('#f-periode') ? $('#f-periode').value : ''; if (!p) return;
+  const jam = g('f-jam'), lti = g('f-lti'), hh = g('f-hh');
+  const prev = statRows().filter(r => r.periode < p).pop();
+  $('#lv-smh').textContent = fmtN(lti > 0 ? 0 : (prev ? prev.smh : 0) + jam);
+  $('#lv-fr').textContent = jam ? nf2.format(lti * RATE_BASE / jam) : '-';
+  $('#lv-sr').textContent = jam ? nf2.format(hh * RATE_BASE / jam) : '-';
+}
+
+/* ------------------------------------------------------------------ sheet */
+function sheetHtml(){
+  const s = S.sheet; if (!s) return '';
+  let title = '', text = '', body = '';
+  if (s.type === 'temuan'){ const t = DB.temuan.find(x => x.id === s.id); if (!t) return ''; const r = temuanSheet(t); title = r.title; text = r.text; body = r.body; }
+  else if (s.type === 'qr'){
+    const a = findAlat(s.kode); title = 'QR ' + esc(a.kode); text = 'QR ' + a.kode;
+    body = '<div class="qrbox">' + qrSvg(qrText(a.kode)) + '</div><div style="text-align:center"><div class="mono" style="font-size:18px">' + esc(a.kode) + '</div><div class="muted">' + esc(a.jenis) + ' · ' + esc(a.lokasi) + '</div></div>' +
+      '<div class="stack-s"><span class="lbl">Isi QR</span><div class="url">' + esc(qrText(a.kode)) + '</div>' + (baseOk() ? '<p class="hint">Cetak QR ini dan tempel pada alat. Operator memindainya dengan kamera HP biasa.</p>'
+        : '<div class="note warn"><strong>Alamat webapp belum terisi.</strong> Buka alamat webapp (/exec) sekali di browser atau isi Config &gt; Base_URL, lalu muat ulang halaman ini sebelum mencetak QR.</div>') + '</div>';
+  } else if (s.type === 'user'){
+    title = 'Akun'; text = 'Akun';
+    body = '<dl class="kv"><dt>Nama</dt><dd>' + esc(S.user.nama) + '</dd><dt>NIK</dt><dd class="mono">' + esc(S.user.nik) + '</dd><dt>Peran</dt><dd>' + esc(S.user.role) + '</dd><dt>Bagian</dt><dd>' + esc(S.user.bagian) + '</dd></dl>' +
+      '<button class="btn block" data-act="logout">' + ic('logout') + 'Keluar</button>';
+  }
+  return '<div class="scrim" data-act="close-sheet"></div><section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="' + esc(text) + '" tabindex="-1"><div class="wrap sheet-in"><div class="sheet-h"><h2>' + title + '</h2><button class="icon-btn" data-act="close-sheet" aria-label="Tutup">' + ic('x') + '</button></div>' + body + '</div></section>';
+}
+
+/* ------------------------------------------------------------------ render */
+function render(opt){
+  const y = window.scrollY, app = $('#app');
+  if (!onScanView()) stopLive();
+  if (S.boot){ app.innerHTML = loadingView(); return; }
+  if (!S.user){
+    app.innerHTML = loginView(); document.documentElement.style.overflow = '';
+    const f = $(S.needPin ? '#pin' : '#nik'); if (f && S.needPin) f.focus({preventScroll: true});
+    return;
+  }
+  let main, tabs = true;
+  if (S.insp){ main = inspectView(); tabs = false; }
+  else if (S.done){ main = doneView(); tabs = false; }
+  else main = {home: homeView, scan: scanView, temuan: temuanView, admin: adminView}[S.tab]();
+  app.innerHTML = headerHtml() + '<main class="wrap main ' + (tabs ? '' : 'noTabs') + '" id="main">' + main + '</main>' + (tabs ? tabsHtml() : '') + sheetHtml();
+  document.documentElement.style.overflow = S.sheet ? 'hidden' : '';
+  if (S.sheet && !S.sheetFocused){ const sh = $('#sheet'); if (sh) sh.focus({preventScroll: true}); S.sheetFocused = true; }
+  if (!S.sheet) S.sheetFocused = false;
+  if (S.tab === 'admin' && S.adminTab === 'stat' && !S.insp) livePreview();
+  if (S.sheet && S.sheet.type === 'temuan') loadFotos();
+  if (opt && opt.keep) window.scrollTo(0, y);
+  if (onScanView()) mountLive();
+  saveDraftSoon();
+}
+function go(tab, filter){
+  S.tab = tab; S.sheet = null; S.done = null; S.insp = null;
+  if (filter) S.filter = filter;
+  render(); window.scrollTo(0, 0);
+}
+
+/* ------------------------------------------------------------------ aksi */
+function setBusy(b, on, label){
+  if (!b) return;
+  if (on){ b.dataset.l = b.textContent; b.textContent = label; b.setAttribute('aria-disabled', 'true'); S.busy = true; }
+  else { if (b.dataset.l) b.textContent = b.dataset.l; b.setAttribute('aria-disabled', 'false'); S.busy = false; }
+}
+async function call(action, payload){
+  try{ return await rpc(action, payload); }
+  catch(e){ if (e.code === 'auth') forceLogout(e.message); throw e; }
+}
+function forceLogout(msg){
+  TOKEN = null; tokSet(null); DB = null;
+  Object.assign(S, {user: null, sheet: null, insp: null, done: null, needPin: false, nikTmp: '', loginMsg: msg || '', busy: false, boot: false});
+  render(); window.scrollTo(0, 0);
+}
+function bootKode(){
+  if (!BOOT.kode) return;
+  const k = BOOT.kode; BOOT.kode = '';
+  const e = startInspect(k); if (e) toast(e, 'err');
+}
+function enter(){
+  Object.assign(S, {boot: false, tab: 'home', filter: 'Semua', needPin: false, nikTmp: '', loginMsg: '', busy: false});
+  const back = restoreDraft();
+  render(); window.scrollTo(0, 0);
+  if (!back) bootKode();
+}
+async function login(nik, pin){
+  if (S.busy) return;
+  nik = String(nik || '').replace(/\s+/g, '');
+  const err = $('#login-err'), btn = $('#login-btn');
+  if (!nik){ if (err) err.textContent = 'Isi NIK terlebih dahulu.'; return; }
+  if (S.needPin && !pin){ if (err) err.textContent = 'Isi PIN.'; return; }
+  setBusy(btn, true, 'Memeriksa...');
+  try{
+    const r = await rpc('login', {nik, pin: pin || ''});
+    S.busy = false;
+    if (r.needPin){ S.needPin = true; S.nikTmp = nik; S.loginMsg = ''; render(); return; }
+    TOKEN = r.token; tokSet(TOKEN);
+    S.boot = true; render();
+    await refresh();
+    enter();
+  }catch(e){
+    S.busy = false; S.boot = false; S.nikTmp = nik; S.loginMsg = e.message; render();
+  }
+}
+function startInspect(raw){
+  const a = findAlat(parseKode(raw));
+  if (!a) return 'Kode "' + parseKode(raw) + '" tidak terdaftar.';
+  if (!a.aktif) return a.kode + ' berstatus tidak aktif.';
+  const items = DB.checklist.filter(c => c.jenis === a.jenis).sort((x, y) => x.no - y.no);
+  if (!items.length) return 'Checklist untuk ' + a.jenis + ' belum dibuat. Hubungi Admin K3.';
+  clearPH('i:'); S.insp = {kode: a.kode, items, ans: {}, umum: '', reqId: uuid()}; S.sheet = null; S.done = null;
+  render(); window.scrollTo(0, 0); return '';
+}
+function setAns(id, v){
+  const x = S.insp.ans[id] = S.insp.ans[id] || {};
+  x.ans = v; if (v !== 'Tidak OK'){ x.note = ''; delete PH['i:' + id]; }
+  const c = S.insp.items.find(i => i.id === id), el = document.getElementById('chk-' + id);
+  if (el){ const tmp = document.createElement('div'); tmp.innerHTML = itemHtml(c); el.replaceWith(tmp.firstChild); }
+  updateSubmit();
+}
+async function submitInsp(){
+  if (S.busy) return;
+  const st = inspStatus();
+  if (st.miss.length){
+    toast(st.miss[0].t, 'err');
+    const el = document.getElementById('chk-' + st.miss[0].id); if (el) el.scrollIntoView({block: 'center', behavior: 'smooth'});
+    return;
+  }
+  const btn = $('#btn-submit'), a = findAlat(S.insp.kode);
+  const payload = {reqId: S.insp.reqId, kode: a.kode, umum: (S.insp.umum || '').trim(),
+    answers: S.insp.items.map(c => { const x = S.insp.ans[c.id]; return {butir: c.id, jawaban: x.ans, catatan: (x.note || '').trim(), foto: x.ans === 'Tidak OK' ? (PH['i:' + c.id] || null) : null}; })};
+  setBusy(btn, true, 'Mengirim...');
+  try{
+    const r = await call('submitInspeksi', payload);
+    S.done = {id: r.id, kode: a.kode, jenis: a.jenis, n: S.insp.items.length, temuan: r.temuan};
+    S.insp = null; clearPH('i:'); S.busy = false;
+    try{ await refresh(); }catch(e){}
+    render(); window.scrollTo(0, 0); saveDraftNow();
+  }catch(e){ setBusy(btn, false); toast(e.message, 'err'); }
+}
+async function writeThen(btn, busyLabel, fn, onOk, errEl){
+  if (S.busy) return;
+  setBusy(btn, true, busyLabel);
+  try{
+    const r = await fn();
+    S.busy = false;
+    try{ await refresh(); }catch(e){}
+    onOk(r);
+  }catch(e){
+    setBusy(btn, false);
+    if (errEl) errEl.textContent = e.message; else toast(e.message, 'err');
+  }
+}
+const ACT = {
+  'login-back'(){ Object.assign(S, {needPin: false, nikTmp: '', loginMsg: ''}); render(); },
+  logout(){ rpc('logout').catch(() => {}); forceLogout(''); },
+  user(){ S.sheet = {type: 'user'}; render({keep: true}); },
+  goto(b){ go(b.dataset.tab, b.dataset.filter); },
+  pick(b){ saveDraftNow(); if (/^scanfile/.test(b.dataset.target)){ LV.paused = true; stopLive(); } const f = document.getElementById(b.dataset.target); if (f) f.click(); },
+  torch(){ toggleTorch(); },
+  'live-retry'(){ LV.blocked = false; LV.paused = false; startLive(); },
+  'open-scan'(){ saveDraftNow(); const f = $('#scanfile'); if (f) f.click(); },
+  ans(b){ setAns(b.dataset.id, b.dataset.v); },
+  'ans-all'(){ S.insp.items.forEach(c => { const x = S.insp.ans[c.id]; if (!x || !x.ans) S.insp.ans[c.id] = {ans: 'OK'}; }); render({keep: true}); },
+  'insp-back'(){
+    if (!Object.keys(S.insp.ans).length && !S.insp.umum){ clearPH('i:'); S.insp = null; S.tab = 'scan'; render(); window.scrollTo(0, 0); }
+    else { const d = $('#discard'); d.hidden = false; d.scrollIntoView({block: 'nearest'}); }
+  },
+  'insp-keep'(){ $('#discard').hidden = true; },
+  'insp-discard'(){ clearPH('i:'); S.insp = null; S.tab = 'scan'; render(); window.scrollTo(0, 0); },
+  'submit-insp'(){ submitInsp(); },
+  'done-scan'(){ go('scan'); },
+  'done-home'(){ go('home'); },
+  filter(b){ S.filter = b.dataset.f; render({keep: true}); },
+  'open-temuan'(b){ clearPH('tc:'); S.sheet = {type: 'temuan', id: b.dataset.id}; render({keep: true}); },
+  'close-sheet'(){ S.sheet = null; clearPH('tc:'); render({keep: true}); },
+  ajukan(b){
+    const id = b.dataset.id, note = ($('#tc-note').value || '').trim(), err = $('#tc-err');
+    if (!note){ err.textContent = 'Isi catatan perbaikan.'; return; }
+    if (!PH['tc:' + id]){ err.textContent = 'Foto perbaikan wajib diambil.'; return; }
+    writeThen(b, 'Mengirim...', () => call('ajukanClose', {id, catatan: note, foto: PH['tc:' + id]}), () => {
+      clearPH('tc:'); S.sheet = null; render({keep: true}); toast('Pengajuan close terkirim. Menunggu verifikasi Admin K3.');
+    }, err);
+  },
+  setuju(b){
+    const id = b.dataset.id;
+    writeThen(b, 'Menyimpan...', () => call('verifikasi', {id, setuju: true, catatan: ($('#tv-note').value || '').trim()}), () => {
+      S.sheet = null; render({keep: true}); toast('Temuan ' + id + ' ditutup.');
+    }, $('#tv-err'));
+  },
+  tolak(b){
+    const id = b.dataset.id, note = ($('#tv-note').value || '').trim();
+    if (!note){ $('#tv-err').textContent = 'Tulis alasan penolakan agar petugas tahu yang perlu diperbaiki.'; return; }
+    writeThen(b, 'Menyimpan...', () => call('verifikasi', {id, setuju: false, catatan: note}), () => {
+      S.sheet = null; render({keep: true}); toast('Temuan ' + id + ' dikembalikan ke Open.');
+    }, $('#tv-err'));
+  },
+  'admin-tab'(b){ S.adminTab = b.dataset.t; render({keep: true}); },
+  step(b){
+    const i = document.getElementById(b.dataset.t); i.value = Math.max(0, (parseInt(i.value, 10) || 0) + parseInt(b.dataset.d, 10)); livePreview();
+  },
+  'show-qr'(b){ S.sheet = {type: 'qr', kode: b.dataset.kode}; render({keep: true}); }
+};
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (!S.user && b.dataset.act !== 'login-back') return;
+  const f = ACT[b.dataset.act]; if (f) f(b, e);
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'nik' || t.id === 'pin'){ const er = $('#login-err'); if (er) er.textContent = ''; S.loginMsg = ''; }
+  else if (t.dataset && t.dataset.note && S.insp){ (S.insp.ans[t.dataset.note] = S.insp.ans[t.dataset.note] || {}).note = t.value; updateSubmit(); }
+  else if (t.id === 'umum' && S.insp) S.insp.umum = t.value;
+  else if (t.id === 'tc-note' && S.sheet) S.sheet.note = t.value;
+  else if (t.closest && t.closest('#statform')) livePreview();
+  saveDraftSoon();
+});
+window.addEventListener('pagehide', saveDraftNow);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveDraftNow(); });
+document.addEventListener('change', async e => {
+  const t = e.target;
+  if (t.dataset && t.dataset.photo){
+    const f = t.files && t.files[0]; if (!f) return;
+    try{ PH[t.dataset.photo] = await compress(f); refreshPhoto(t.dataset.photo); if (t.dataset.photo.indexOf('i:') === 0) updateSubmit(); saveDraftNow(); }
+    catch(err){ toast('Foto tidak dapat diproses (memori HP penuh?). Tutup aplikasi lain lalu coba lagi.' + (err && err.why ? ' [' + err.why + ']' : ''), 'err'); }
+    t.value = '';
+  } else if (t.id === 'scanfile' || t.id === 'scanfile2'){
+    const f = t.files && t.files[0]; if (!f) return;
+    toast('Membaca QR...');
+    try{
+      const txt = await decodeQR(f);
+      if (!txt) toast('QR tidak terbaca. Dekatkan kamera dan pastikan QR utuh dan terang.', 'err');
+      else { const er = startInspect(txt); if (er) toast(er, 'err'); else $('#toast').innerHTML = ''; }
+    }catch(err){ toast(err.message === 'lib' ? 'Pemindai QR belum termuat. Periksa koneksi internet.' : 'Foto tidak dapat dibaca. Coba lagi.', 'err'); }
+    t.value = ''; resumeLive();
+  } else if (t.id === 'f-periode'){
+    const rows = statRows(), p = t.value, ex = rows.find(r => r.periode === p), prev = rows.filter(r => r.periode < p).pop();
+    const set = (id, v) => { document.getElementById(id).value = v; };
+    const v = ex || {tk: prev ? prev.tk : '', jam: prev ? prev.jam : '', lti: 0, hh: 0, nm: 0};
+    set('f-tk', v.tk); set('f-jam', v.jam); set('f-lti', v.lti); set('f-hh', v.hh); set('f-nm', v.nm);
+    $('#stat-btn').textContent = (ex ? 'Perbarui' : 'Simpan') + ' statistik'; livePreview();
+  } else if (t.id === 'a-jenis'){ $('#a-kode').value = nextKode(t.value); }
+});
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const id = e.target.id, sbtn = e.target.querySelector('button[type=submit]');
+  if (id === 'loginform') login($('#nik').value, $('#pin') ? $('#pin').value : '');
+  else if (id === 'kodeform'){ const v = $('#kode').value.trim(); if (!v){ $('#kode-err').textContent = 'Ketik kode alat terlebih dahulu.'; return; } const er = startInspect(v); if (er) $('#kode-err').textContent = er; }
+  else if (id === 'statform'){
+    const g = k => parseInt(document.getElementById(k).value, 10), p = $('#f-periode').value, err = $('#stat-err');
+    const r = {periode: p, tk: g('f-tk'), jam: g('f-jam'), lti: g('f-lti'), hh: g('f-hh'), nm: g('f-nm')};
+    if (!p){ err.textContent = 'Pilih periode.'; return; }
+    if ([r.tk, r.jam, r.lti, r.hh, r.nm].some(n => isNaN(n) || n < 0)){ err.textContent = 'Isi semua kolom dengan angka 0 atau lebih.'; return; }
+    if (r.jam === 0){ err.textContent = 'Jam kerja belum diisi.'; return; }
+    writeThen(sbtn, 'Menyimpan...', () => call('saveStatistik', r), () => {
+      const cur = statRows().find(x => x.periode === p); render({keep: true});
+      toast('Statistik ' + fMonth.format(parseYM(p)) + ' tersimpan. Safe Man-Hours ' + fmtN(cur ? cur.smh : 0) + ' jam.');
+    }, err);
+  }
+  else if (id === 'alatform'){
+    const v = k => document.getElementById(k).value.trim(), err = $('#a-err'), kode = v('a-kode').toUpperCase();
+    if (!kode || !v('a-lok')){ err.textContent = 'Kode alat dan lokasi wajib diisi.'; return; }
+    writeThen(sbtn, 'Menyimpan...', () => call('addAlat', {kode, jenis: v('a-jenis'), merk: v('a-merk'), area: v('a-area'), lokasi: v('a-lok'), pic: v('a-pic'), kadaluarsa: v('a-kad')}), () => {
+      render({keep: true}); toast('Alat ' + kode + ' ditambahkan. Ketuk ikon QR untuk mencetak labelnya.');
+    }, err);
+  }
+  else if (id === 'jenisform'){
+    const v = k => document.getElementById(k).value.trim(), err = $('#j-err'), nama = v('j-nama'), pre = v('j-pre').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const qs = v('j-q').split('\n').map(x => x.trim()).filter(Boolean);
+    if (!nama || !pre){ err.textContent = 'Nama jenis dan awalan kode wajib diisi.'; return; }
+    if (!qs.length){ err.textContent = 'Tulis minimal satu butir checklist.'; return; }
+    writeThen(sbtn, 'Menyimpan...', () => call('addJenis', {jenis: nama, kategori: v('j-kat'), prefix: pre, frek: v('j-frek'), pertanyaan: qs}), () => {
+      render({keep: true}); toast('Jenis ' + nama + ' ditambahkan dengan ' + qs.length + ' butir checklist.');
+    }, err);
+  }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.sheet) ACT['close-sheet'](); });
+
+/* ------------------------------------------------------------------ mulai */
+(async function start(){
+  render();                                  // layar "Memuat data"
+  TOKEN = tokGet();
+  if (TOKEN){
+    try{ await refresh(); enter(); return; }
+    catch(e){ if (e.code === 'auth'){ TOKEN = null; tokSet(null); } else S.loginMsg = e.message; }
+  }
+  S.boot = false; render();
+  if (!BOOT.company) rpc('info').then(d => {           // nama perusahaan untuk layar login (halaman di luar Apps Script tidak menerimanya dari server)
+    if (d && d.company){ BOOT.company = d.company; const n = $('#nik'); if (!S.user && !S.boot && n && !n.value) render(); }
+  }).catch(() => {});
+})();
+})();
+</script>
+</body>
+</html>
